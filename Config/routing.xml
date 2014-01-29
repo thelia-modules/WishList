@@ -1,0 +1,11 @@
+
+<routes xmlns="http://symfony.com/schema/routing"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://symfony.com/schema/routing http://symfony.com/schema/routing/routing-1.0.xsd">
+
+    <route id="front.wishlist.add" path="/wishlist/add/{product_id}">
+        <default key="_controller">WishList\Controller\Front\WishListController::addProduct</default>
+        <requirement key="product_id">\d+</requirement>
+    </route>
+
+</routes>

@@ -2,11 +2,11 @@
 
 namespace WishList\Model;
 
-use WishList\Model\Base\WhishListQuery as BaseWhishListQuery;
+use WishList\Model\Base\WishListQuery as BaseWishListQuery;
 
 
 /**
- * Skeleton subclass for performing query and update operations on the 'whish_list' table.
+ * Skeleton subclass for performing query and update operations on the 'wish_list' table.
  *
  *
  *
@@ -15,7 +15,7 @@ use WishList\Model\Base\WhishListQuery as BaseWhishListQuery;
  * long as it does not already exist in the output directory.
  *
  */
-class WhishListQuery extends BaseWhishListQuery
+class WishListQuery extends BaseWishListQuery
 {
 
-} // WhishListQuery
+} // WishListQuery

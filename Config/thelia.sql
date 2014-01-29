@@ -4,12 +4,12 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ---------------------------------------------------------------------
--- whish_list
+-- wish_list
 -- ---------------------------------------------------------------------
 
-DROP TABLE IF EXISTS `whish_list`;
+DROP TABLE IF EXISTS `wish_list`;
 
-CREATE TABLE `whish_list`
+CREATE TABLE `wish_list`
 (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `product_id` INTEGER NOT NULL,

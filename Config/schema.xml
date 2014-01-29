@@ -4,7 +4,7 @@
     See propel documentation on http://propelorm.org for all information about schema file
     -->
 
-    <table name="whish_list" namespace="WishList\Model">
+    <table name="wish_list" namespace="WishList\Model">
         <column autoIncrement="true" name="id" primaryKey="true" required="true" type="INTEGER" />
         <column name="product_id" required="true" type="INTEGER" />
         <column name="customer_id" required="true" type="INTEGER" />
