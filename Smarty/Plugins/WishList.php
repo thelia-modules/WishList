@@ -4,7 +4,7 @@
 /*      Thelia	                                                                     */
 /*                                                                                   */
 /*      Copyright (c) OpenStudio                                                     */
-/*      email : info@thelia.net                                                      */
+/*	    email : info@thelia.net                                                      */
 /*      web : http://www.thelia.net                                                  */
 /*                                                                                   */
 /*      This program is free software; you can redistribute it and/or modify         */
@@ -20,73 +20,56 @@
 /*	    along with this program. If not, see <http://www.gnu.org/licenses/>.         */
 /*                                                                                   */
 /*************************************************************************************/
-namespace WishList\Controller\Front;
 
-use Thelia\Controller\Front\BaseFrontController;
-use WishList\Event\WishListEvents;
+namespace WishList\Smarty\Plugins;
+
+use Thelia\Core\HttpFoundation\Request;
+use Thelia\Core\Template\Smarty\AbstractSmartyPlugin;
+use Thelia\Core\Template\Smarty\SmartyPluginDescriptor;
 use WishList\WishListManager;
 
-/**
- *
- * WishList management controller
- *
- * @author Michaël Espeche <mespeche@openstudio.fr>
- */
-
-class WishListController extends BaseFrontController
+class WishList extends AbstractSmartyPlugin
 {
 
-    public function addProduct($productId){
+    protected $request = null;
+    protected $userId = null;
 
-        if($customer = $this->getSession()->getCustomerUser()){
-            $customerId = $customer->getId();
-
-            $wishListManager = new WishListManager();
-
-            if(null === $wishListManager->getExistingObject($customerId, $productId)){
-                $data = array('product_id' => $productId, 'user_id' => $customerId);
-
-                $event = $this->createEventInstance($data);
-                $this->dispatch(WishListEvents::WISHLIST_ADD_PRODUCT, $event);
-            }
-        }
-
-        $this->redirect('/');
-    }
-
-    public function removeProduct($productId){
-
-        if($customer = $this->getSession()->getCustomerUser()){
-            $customerId = $customer->getId();
-
-            $wishListManager = new WishListManager();
-
-            if(null !== $wishList = $wishListManager->getExistingObject($customerId, $productId)){
-
-                $data = array('product_id' => $productId, 'user_id' => $customerId);
-
-                $event = $this->createEventInstance($data);
-                $event->setWishList($wishList->getId());
-
-                $this->dispatch(WishListEvents::WISHLIST_REMOVE_PRODUCT, $event);
-            }
-        }
-
-        $this->redirect('/');
-    }
-
-    /**
-     * @param $data
-     * @return \WishList\Event\WishListEvents
-     */
-    private function createEventInstance($data)
+    public function __construct(Request $request)
     {
 
-        $wishListEvent = new WishListEvents(
-            $data['product_id'], $data['user_id']
-        );
+        $this->request = $request;
 
-        return $wishListEvent;
+        $session = $this->request->getSession()->getCustomerUser();
+
+        $this->userId = $session->getId();
+
     }
 
+    public function inWishList($params){
+
+        $ret = false;
+
+        if (isset($params['product_id'])) {
+            $wishListManager = new WishListManager();
+
+            $wishListAssociationExist = $wishListManager->getExistingObject($this->userId, $params['product_id']);
+            if (null !== $wishListAssociationExist) {
+                $ret = true;
+            }
+        }
+
+        return $ret;
+
+    }
+
+
+    /**
+     * @return an array of SmartyPluginDescriptor
+     */
+    public function getPluginDescriptors()
+    {
+        return array(
+            new SmartyPluginDescriptor("function", "in_wishlist", $this, "inWishList")
+        );
+    }
 }

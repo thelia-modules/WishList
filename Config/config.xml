@@ -29,6 +29,11 @@
     </templateDirectives>
 
     <services>
+        <service id="wishList.smarty.plugin" class="WishList\Smarty\Plugins\WishList" scope="request">
+            <argument type="service" id="request"/>
+            <tag name="thelia.parser.register_plugin"/>
+        </service>
+
         <service id="wishList.action" class="WishList\Action\WishList">
             <argument type="service" id="service_container"/>
             <tag name="kernel.event_subscriber"/>

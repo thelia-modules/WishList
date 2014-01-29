@@ -8,4 +8,9 @@
         <requirement key="productId">\d+</requirement>
     </route>
 
+    <route id="front.wishlist.remove" path="/wishlist/remove/{productId}">
+        <default key="_controller">WishList\Controller\Front\WishListController::removeProduct</default>
+        <requirement key="productId">\d+</requirement>
+    </route>
+
 </routes>

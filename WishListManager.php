@@ -20,73 +20,23 @@
 /*	    along with this program. If not, see <http://www.gnu.org/licenses/>.         */
 /*                                                                                   */
 /*************************************************************************************/
-namespace WishList\Controller\Front;
+namespace WishList;
 
-use Thelia\Controller\Front\BaseFrontController;
-use WishList\Event\WishListEvents;
-use WishList\WishListManager;
+use WishList\Model\WishListQuery;
 
-/**
- *
- * WishList management controller
- *
- * @author Michaël Espeche <mespeche@openstudio.fr>
- */
-
-class WishListController extends BaseFrontController
+class WishListManager
 {
 
-    public function addProduct($productId){
-
-        if($customer = $this->getSession()->getCustomerUser()){
-            $customerId = $customer->getId();
-
-            $wishListManager = new WishListManager();
-
-            if(null === $wishListManager->getExistingObject($customerId, $productId)){
-                $data = array('product_id' => $productId, 'user_id' => $customerId);
-
-                $event = $this->createEventInstance($data);
-                $this->dispatch(WishListEvents::WISHLIST_ADD_PRODUCT, $event);
-            }
-        }
-
-        $this->redirect('/');
-    }
-
-    public function removeProduct($productId){
-
-        if($customer = $this->getSession()->getCustomerUser()){
-            $customerId = $customer->getId();
-
-            $wishListManager = new WishListManager();
-
-            if(null !== $wishList = $wishListManager->getExistingObject($customerId, $productId)){
-
-                $data = array('product_id' => $productId, 'user_id' => $customerId);
-
-                $event = $this->createEventInstance($data);
-                $event->setWishList($wishList->getId());
-
-                $this->dispatch(WishListEvents::WISHLIST_REMOVE_PRODUCT, $event);
-            }
-        }
-
-        $this->redirect('/');
-    }
-
     /**
-     * @param $data
-     * @return \WishList\Event\WishListEvents
+     * Load an existing object from the database
      */
-    private function createEventInstance($data)
+    public function getExistingObject($customerId, $productId)
     {
 
-        $wishListEvent = new WishListEvents(
-            $data['product_id'], $data['user_id']
-        );
-
-        return $wishListEvent;
+        return WishListQuery::create()
+            ->filterByCustomerId($customerId)
+            ->filterByProductId($productId)
+            ->findOne();
     }
 
 }

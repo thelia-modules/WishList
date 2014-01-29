@@ -40,10 +40,10 @@ class WishListEvents extends ActionEvent
     const BEFORE_WISHLIST_ADD_PRODUCT   = 'whishList.action.beforeAddProduct';
     const AFTER_WISHLIST_ADD_PRODUCT    = 'whishList.action.afterAddProduct';
 
-    const WISHLIST_DELETE_PRODUCT = 'whishList.action.deleteProduct';
+    const WISHLIST_REMOVE_PRODUCT = 'whishList.action.removeProduct';
 
-    const BEFORE_WISHLIST_DELETE_PRODUCT   = 'whishList.action.beforeDeleteProduct';
-    const AFTER_WISHLIST_DELETE_PRODUCT    = 'whishList.action.afterDeleteProduct';
+    const BEFORE_WISHLIST_REMOVE_PRODUCT   = 'whishList.action.beforeRemoveProduct';
+    const AFTER_WISHLIST_REMOVE_PRODUCT    = 'whishList.action.afterRemoveProduct';
 
     protected $userId;
     protected $productId;
