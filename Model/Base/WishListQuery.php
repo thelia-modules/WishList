@@ -7,13 +7,8 @@ use \PDO;
 use Propel\Runtime\Propel;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\ModelCriteria;
-use Propel\Runtime\ActiveQuery\ModelJoin;
-use Propel\Runtime\Collection\Collection;
-use Propel\Runtime\Collection\ObjectCollection;
 use Propel\Runtime\Connection\ConnectionInterface;
 use Propel\Runtime\Exception\PropelException;
-use Thelia\Model\Customer;
-use Thelia\Model\Product;
 use WishList\Model\WishList as ChildWishList;
 use WishList\Model\WishListQuery as ChildWishListQuery;
 use WishList\Model\Map\WishListTableMap;
@@ -38,14 +33,6 @@ use WishList\Model\Map\WishListTableMap;
  * @method     ChildWishListQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
  * @method     ChildWishListQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
  * @method     ChildWishListQuery innerJoin($relation) Adds a INNER JOIN clause to the query
- *
- * @method     ChildWishListQuery leftJoinProduct($relationAlias = null) Adds a LEFT JOIN clause to the query using the Product relation
- * @method     ChildWishListQuery rightJoinProduct($relationAlias = null) Adds a RIGHT JOIN clause to the query using the Product relation
- * @method     ChildWishListQuery innerJoinProduct($relationAlias = null) Adds a INNER JOIN clause to the query using the Product relation
- *
- * @method     ChildWishListQuery leftJoinCustomer($relationAlias = null) Adds a LEFT JOIN clause to the query using the Customer relation
- * @method     ChildWishListQuery rightJoinCustomer($relationAlias = null) Adds a RIGHT JOIN clause to the query using the Customer relation
- * @method     ChildWishListQuery innerJoinCustomer($relationAlias = null) Adds a INNER JOIN clause to the query using the Customer relation
  *
  * @method     ChildWishList findOne(ConnectionInterface $con = null) Return the first ChildWishList matching the query
  * @method     ChildWishList findOneOrCreate(ConnectionInterface $con = null) Return the first ChildWishList matching the query, or a new ChildWishList object populated from the query conditions when no match is found
@@ -289,8 +276,6 @@ abstract class WishListQuery extends ModelCriteria
      * $query->filterByProductId(array('min' => 12)); // WHERE product_id > 12
      * </code>
      *
-     * @see       filterByProduct()
-     *
      * @param     mixed $productId The value to use as filter.
      *              Use scalar values for equality.
      *              Use array values for in_array() equivalent.
@@ -331,8 +316,6 @@ abstract class WishListQuery extends ModelCriteria
      * $query->filterByCustomerId(array(12, 34)); // WHERE customer_id IN (12, 34)
      * $query->filterByCustomerId(array('min' => 12)); // WHERE customer_id > 12
      * </code>
-     *
-     * @see       filterByCustomer()
      *
      * @param     mixed $customerId The value to use as filter.
      *              Use scalar values for equality.
@@ -449,156 +432,6 @@ abstract class WishListQuery extends ModelCriteria
         }
 
         return $this->addUsingAlias(WishListTableMap::UPDATED_AT, $updatedAt, $comparison);
-    }
-
-    /**
-     * Filter the query by a related \Thelia\Model\Product object
-     *
-     * @param \Thelia\Model\Product|ObjectCollection $product The related object(s) to use as filter
-     * @param string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
-     *
-     * @return ChildWishListQuery The current query, for fluid interface
-     */
-    public function filterByProduct($product, $comparison = null)
-    {
-        if ($product instanceof \Thelia\Model\Product) {
-            return $this
-                ->addUsingAlias(WishListTableMap::PRODUCT_ID, $product->getId(), $comparison);
-        } elseif ($product instanceof ObjectCollection) {
-            if (null === $comparison) {
-                $comparison = Criteria::IN;
-            }
-
-            return $this
-                ->addUsingAlias(WishListTableMap::PRODUCT_ID, $product->toKeyValue('PrimaryKey', 'Id'), $comparison);
-        } else {
-            throw new PropelException('filterByProduct() only accepts arguments of type \Thelia\Model\Product or Collection');
-        }
-    }
-
-    /**
-     * Adds a JOIN clause to the query using the Product relation
-     *
-     * @param     string $relationAlias optional alias for the relation
-     * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
-     *
-     * @return ChildWishListQuery The current query, for fluid interface
-     */
-    public function joinProduct($relationAlias = null, $joinType = Criteria::INNER_JOIN)
-    {
-        $tableMap = $this->getTableMap();
-        $relationMap = $tableMap->getRelation('Product');
-
-        // create a ModelJoin object for this join
-        $join = new ModelJoin();
-        $join->setJoinType($joinType);
-        $join->setRelationMap($relationMap, $this->useAliasInSQL ? $this->getModelAlias() : null, $relationAlias);
-        if ($previousJoin = $this->getPreviousJoin()) {
-            $join->setPreviousJoin($previousJoin);
-        }
-
-        // add the ModelJoin to the current object
-        if ($relationAlias) {
-            $this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
-            $this->addJoinObject($join, $relationAlias);
-        } else {
-            $this->addJoinObject($join, 'Product');
-        }
-
-        return $this;
-    }
-
-    /**
-     * Use the Product relation Product object
-     *
-     * @see useQuery()
-     *
-     * @param     string $relationAlias optional alias for the relation,
-     *                                   to be used as main alias in the secondary query
-     * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
-     *
-     * @return   \Thelia\Model\ProductQuery A secondary query class using the current class as primary query
-     */
-    public function useProductQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
-    {
-        return $this
-            ->joinProduct($relationAlias, $joinType)
-            ->useQuery($relationAlias ? $relationAlias : 'Product', '\Thelia\Model\ProductQuery');
-    }
-
-    /**
-     * Filter the query by a related \Thelia\Model\Customer object
-     *
-     * @param \Thelia\Model\Customer|ObjectCollection $customer The related object(s) to use as filter
-     * @param string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
-     *
-     * @return ChildWishListQuery The current query, for fluid interface
-     */
-    public function filterByCustomer($customer, $comparison = null)
-    {
-        if ($customer instanceof \Thelia\Model\Customer) {
-            return $this
-                ->addUsingAlias(WishListTableMap::CUSTOMER_ID, $customer->getId(), $comparison);
-        } elseif ($customer instanceof ObjectCollection) {
-            if (null === $comparison) {
-                $comparison = Criteria::IN;
-            }
-
-            return $this
-                ->addUsingAlias(WishListTableMap::CUSTOMER_ID, $customer->toKeyValue('PrimaryKey', 'Id'), $comparison);
-        } else {
-            throw new PropelException('filterByCustomer() only accepts arguments of type \Thelia\Model\Customer or Collection');
-        }
-    }
-
-    /**
-     * Adds a JOIN clause to the query using the Customer relation
-     *
-     * @param     string $relationAlias optional alias for the relation
-     * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
-     *
-     * @return ChildWishListQuery The current query, for fluid interface
-     */
-    public function joinCustomer($relationAlias = null, $joinType = Criteria::INNER_JOIN)
-    {
-        $tableMap = $this->getTableMap();
-        $relationMap = $tableMap->getRelation('Customer');
-
-        // create a ModelJoin object for this join
-        $join = new ModelJoin();
-        $join->setJoinType($joinType);
-        $join->setRelationMap($relationMap, $this->useAliasInSQL ? $this->getModelAlias() : null, $relationAlias);
-        if ($previousJoin = $this->getPreviousJoin()) {
-            $join->setPreviousJoin($previousJoin);
-        }
-
-        // add the ModelJoin to the current object
-        if ($relationAlias) {
-            $this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
-            $this->addJoinObject($join, $relationAlias);
-        } else {
-            $this->addJoinObject($join, 'Customer');
-        }
-
-        return $this;
-    }
-
-    /**
-     * Use the Customer relation Customer object
-     *
-     * @see useQuery()
-     *
-     * @param     string $relationAlias optional alias for the relation,
-     *                                   to be used as main alias in the secondary query
-     * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
-     *
-     * @return   \Thelia\Model\CustomerQuery A secondary query class using the current class as primary query
-     */
-    public function useCustomerQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
-    {
-        return $this
-            ->joinCustomer($relationAlias, $joinType)
-            ->useQuery($relationAlias ? $relationAlias : 'Customer', '\Thelia\Model\CustomerQuery');
     }
 
     /**

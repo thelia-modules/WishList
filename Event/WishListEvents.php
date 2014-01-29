@@ -20,60 +20,102 @@
 /*	    along with this program. If not, see <http://www.gnu.org/licenses/>.         */
 /*                                                                                   */
 /*************************************************************************************/
-namespace WishList\Controller\Front;
 
-use Thelia\Controller\Front\BaseFrontController;
-use WishList\Event\WishListEvents;
-use WishList\Model\Base\WishListQuery;
+namespace WishList\Event;
+
+use Thelia\Core\Event\ActionEvent;
 
 /**
  *
- * WishList management controller
+ * This class contains all WishList events identifiers used by WishList Core
  *
  * @author Michaël Espeche <mespeche@openstudio.fr>
  */
 
-class WishListController extends BaseFrontController
+class WishListEvents extends ActionEvent
 {
 
-    public function addProduct($productId){
+    const WISHLIST_ADD_PRODUCT = 'whishList.action.addProduct';
 
-        $customerId = $this->getSession()->getCustomerUser()->getId();
+    const BEFORE_WISHLIST_ADD_PRODUCT   = 'whishList.action.beforeAddProduct';
+    const AFTER_WISHLIST_ADD_PRODUCT    = 'whishList.action.afterAddProduct';
 
-        if(null == $this->getExistingObject($customerId, $productId)){
-            $data = array('product_id' => $productId, 'user_id' => $customerId);
+    const WISHLIST_DELETE_PRODUCT = 'whishList.action.deleteProduct';
 
-            $event = $this->createEventInstance($data);
-            $this->dispatch(WishListEvents::WISHLIST_ADD_PRODUCT, $event);
-        }
+    const BEFORE_WISHLIST_DELETE_PRODUCT   = 'whishList.action.beforeDeleteProduct';
+    const AFTER_WISHLIST_DELETE_PRODUCT    = 'whishList.action.afterDeleteProduct';
 
-        $this->redirect('/');
+    protected $userId;
+    protected $productId;
+    protected $wishList;
+
+    function __construct($productId, $userId)
+    {
+        $this->productId = $productId;
+        $this->userId = $userId;
     }
 
     /**
-     * @param $data
-     * @return \WishList\Event\WishListEvents
+     * @param mixed $productId
      */
-    private function createEventInstance($data)
+    public function setProductId($productId)
     {
+        $this->productId = $productId;
 
-        $wishListEvent = new WishListEvents(
-            $data['product_id'], $data['user_id']
-        );
-
-        return $wishListEvent;
+        return $this;
     }
 
     /**
-     * Load an existing object from the database
+     * @return mixed
      */
-    protected function getExistingObject($customerId, $productId)
+    public function getProductId()
     {
-
-        return WishListQuery::create()
-            ->filterByCustomerId($customerId)
-            ->filterByProductId($productId)
-            ->findOne();
+        return $this->productId;
     }
 
+    /**
+     * @param mixed $userId
+     */
+    public function setUserId($userId)
+    {
+        $this->userId = $userId;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getUserId()
+    {
+        return $this->userId;
+    }
+
+    /**
+     * @param mixed $wishList
+     */
+    public function setWishList($wishList)
+    {
+        $this->wishList = $wishList;
+
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getWishList()
+    {
+        return $this->wishList;
+    }
+
+    /**
+     * check if wishList exists
+     *
+     * @return bool
+     */
+    public function hasWishList()
+    {
+        return null !== $this->wishList;
+    }
 }

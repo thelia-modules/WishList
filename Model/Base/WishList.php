@@ -16,10 +16,6 @@ use Propel\Runtime\Exception\PropelException;
 use Propel\Runtime\Map\TableMap;
 use Propel\Runtime\Parser\AbstractParser;
 use Propel\Runtime\Util\PropelDateTime;
-use Thelia\Model\Customer as ChildCustomer;
-use Thelia\Model\Product as ChildProduct;
-use Thelia\Model\CustomerQuery;
-use Thelia\Model\ProductQuery;
 use WishList\Model\WishList as ChildWishList;
 use WishList\Model\WishListQuery as ChildWishListQuery;
 use WishList\Model\Map\WishListTableMap;
@@ -87,16 +83,6 @@ abstract class WishList implements ActiveRecordInterface
      * @var        string
      */
     protected $updated_at;
-
-    /**
-     * @var        Product
-     */
-    protected $aProduct;
-
-    /**
-     * @var        Customer
-     */
-    protected $aCustomer;
 
     /**
      * Flag to prevent endless save loop, if this object is referenced
@@ -475,10 +461,6 @@ abstract class WishList implements ActiveRecordInterface
             $this->modifiedColumns[WishListTableMap::PRODUCT_ID] = true;
         }
 
-        if ($this->aProduct !== null && $this->aProduct->getId() !== $v) {
-            $this->aProduct = null;
-        }
-
 
         return $this;
     } // setProductId()
@@ -498,10 +480,6 @@ abstract class WishList implements ActiveRecordInterface
         if ($this->customer_id !== $v) {
             $this->customer_id = $v;
             $this->modifiedColumns[WishListTableMap::CUSTOMER_ID] = true;
-        }
-
-        if ($this->aCustomer !== null && $this->aCustomer->getId() !== $v) {
-            $this->aCustomer = null;
         }
 
 
@@ -637,12 +615,6 @@ abstract class WishList implements ActiveRecordInterface
      */
     public function ensureConsistency()
     {
-        if ($this->aProduct !== null && $this->product_id !== $this->aProduct->getId()) {
-            $this->aProduct = null;
-        }
-        if ($this->aCustomer !== null && $this->customer_id !== $this->aCustomer->getId()) {
-            $this->aCustomer = null;
-        }
     } // ensureConsistency
 
     /**
@@ -682,8 +654,6 @@ abstract class WishList implements ActiveRecordInterface
 
         if ($deep) {  // also de-associate any related objects?
 
-            $this->aProduct = null;
-            $this->aCustomer = null;
         } // if (deep)
     }
 
@@ -805,25 +775,6 @@ abstract class WishList implements ActiveRecordInterface
         $affectedRows = 0; // initialize var to track total num of affected rows
         if (!$this->alreadyInSave) {
             $this->alreadyInSave = true;
-
-            // We call the save method on the following object(s) if they
-            // were passed to this object by their corresponding set
-            // method.  This object relates to these object(s) by a
-            // foreign key reference.
-
-            if ($this->aProduct !== null) {
-                if ($this->aProduct->isModified() || $this->aProduct->isNew()) {
-                    $affectedRows += $this->aProduct->save($con);
-                }
-                $this->setProduct($this->aProduct);
-            }
-
-            if ($this->aCustomer !== null) {
-                if ($this->aCustomer->isModified() || $this->aCustomer->isNew()) {
-                    $affectedRows += $this->aCustomer->save($con);
-                }
-                $this->setCustomer($this->aCustomer);
-            }
 
             if ($this->isNew() || $this->isModified()) {
                 // persist changes
@@ -997,11 +948,10 @@ abstract class WishList implements ActiveRecordInterface
      *                    Defaults to TableMap::TYPE_PHPNAME.
      * @param     boolean $includeLazyLoadColumns (optional) Whether to include lazy loaded columns. Defaults to TRUE.
      * @param     array $alreadyDumpedObjects List of objects to skip to avoid recursion
-     * @param     boolean $includeForeignObjects (optional) Whether to include hydrated related objects. Default to FALSE.
      *
      * @return array an associative array containing the field names (as keys) and field values
      */
-    public function toArray($keyType = TableMap::TYPE_PHPNAME, $includeLazyLoadColumns = true, $alreadyDumpedObjects = array(), $includeForeignObjects = false)
+    public function toArray($keyType = TableMap::TYPE_PHPNAME, $includeLazyLoadColumns = true, $alreadyDumpedObjects = array())
     {
         if (isset($alreadyDumpedObjects['WishList'][$this->getPrimaryKey()])) {
             return '*RECURSION*';
@@ -1020,14 +970,6 @@ abstract class WishList implements ActiveRecordInterface
             $result[$key] = $virtualColumn;
         }
 
-        if ($includeForeignObjects) {
-            if (null !== $this->aProduct) {
-                $result['Product'] = $this->aProduct->toArray($keyType, $includeLazyLoadColumns,  $alreadyDumpedObjects, true);
-            }
-            if (null !== $this->aCustomer) {
-                $result['Customer'] = $this->aCustomer->toArray($keyType, $includeLazyLoadColumns,  $alreadyDumpedObjects, true);
-            }
-        }
 
         return $result;
     }
@@ -1217,108 +1159,6 @@ abstract class WishList implements ActiveRecordInterface
     }
 
     /**
-     * Declares an association between this object and a ChildProduct object.
-     *
-     * @param                  ChildProduct $v
-     * @return                 \WishList\Model\WishList The current object (for fluent API support)
-     * @throws PropelException
-     */
-    public function setProduct(ChildProduct $v = null)
-    {
-        if ($v === null) {
-            $this->setProductId(NULL);
-        } else {
-            $this->setProductId($v->getId());
-        }
-
-        $this->aProduct = $v;
-
-        // Add binding for other direction of this n:n relationship.
-        // If this object has already been added to the ChildProduct object, it will not be re-added.
-        if ($v !== null) {
-            $v->addWishList($this);
-        }
-
-
-        return $this;
-    }
-
-
-    /**
-     * Get the associated ChildProduct object
-     *
-     * @param      ConnectionInterface $con Optional Connection object.
-     * @return                 ChildProduct The associated ChildProduct object.
-     * @throws PropelException
-     */
-    public function getProduct(ConnectionInterface $con = null)
-    {
-        if ($this->aProduct === null && ($this->product_id !== null)) {
-            $this->aProduct = ProductQuery::create()->findPk($this->product_id, $con);
-            /* The following can be used additionally to
-                guarantee the related object contains a reference
-                to this object.  This level of coupling may, however, be
-                undesirable since it could result in an only partially populated collection
-                in the referenced object.
-                $this->aProduct->addWishLists($this);
-             */
-        }
-
-        return $this->aProduct;
-    }
-
-    /**
-     * Declares an association between this object and a ChildCustomer object.
-     *
-     * @param                  ChildCustomer $v
-     * @return                 \WishList\Model\WishList The current object (for fluent API support)
-     * @throws PropelException
-     */
-    public function setCustomer(ChildCustomer $v = null)
-    {
-        if ($v === null) {
-            $this->setCustomerId(NULL);
-        } else {
-            $this->setCustomerId($v->getId());
-        }
-
-        $this->aCustomer = $v;
-
-        // Add binding for other direction of this n:n relationship.
-        // If this object has already been added to the ChildCustomer object, it will not be re-added.
-        if ($v !== null) {
-            $v->addWishList($this);
-        }
-
-
-        return $this;
-    }
-
-
-    /**
-     * Get the associated ChildCustomer object
-     *
-     * @param      ConnectionInterface $con Optional Connection object.
-     * @return                 ChildCustomer The associated ChildCustomer object.
-     * @throws PropelException
-     */
-    public function getCustomer(ConnectionInterface $con = null)
-    {
-        if ($this->aCustomer === null && ($this->customer_id !== null)) {
-            $this->aCustomer = CustomerQuery::create()->findPk($this->customer_id, $con);
-            /* The following can be used additionally to
-                guarantee the related object contains a reference
-                to this object.  This level of coupling may, however, be
-                undesirable since it could result in an only partially populated collection
-                in the referenced object.
-                $this->aCustomer->addWishLists($this);
-             */
-        }
-
-        return $this->aCustomer;
-    }
-
-    /**
      * Clears the current object and sets all attributes to their default values
      */
     public function clear()
@@ -1349,8 +1189,6 @@ abstract class WishList implements ActiveRecordInterface
         if ($deep) {
         } // if ($deep)
 
-        $this->aProduct = null;
-        $this->aCustomer = null;
     }
 
     /**

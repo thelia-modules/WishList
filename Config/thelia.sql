@@ -18,13 +18,7 @@ CREATE TABLE `wish_list`
     `updated_at` DATETIME,
     PRIMARY KEY (`id`),
     INDEX `idx_wish_list_product_id` (`product_id`),
-    INDEX `idx_wish_list_customer_id` (`customer_id`),
-    CONSTRAINT `fk_wish_list_product_id`
-        FOREIGN KEY (`product_id`)
-        REFERENCES `product` (`id`),
-    CONSTRAINT `fk_wish_list_customer_id`
-        FOREIGN KEY (`customer_id`)
-        REFERENCES `customer` (`id`)
+    INDEX `idx_wish_list_customer_id` (`customer_id`)
 ) ENGINE=InnoDB;
 
 # This restores the fkey checks, after having unset them earlier

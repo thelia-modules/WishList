@@ -20,60 +20,59 @@
 /*	    along with this program. If not, see <http://www.gnu.org/licenses/>.         */
 /*                                                                                   */
 /*************************************************************************************/
-namespace WishList\Controller\Front;
 
-use Thelia\Controller\Front\BaseFrontController;
+namespace WishList\Action;
+
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Thelia\Action\BaseAction;
 use WishList\Event\WishListEvents;
-use WishList\Model\Base\WishListQuery;
 
 /**
  *
- * WishList management controller
+ * WishList class where all actions are managed
  *
+ * Class WishList
+ * @package WishList\Action
  * @author Michaël Espeche <mespeche@openstudio.fr>
  */
-
-class WishListController extends BaseFrontController
+class WishList extends BaseAction implements EventSubscriberInterface
 {
 
-    public function addProduct($productId){
+    public function addProduct(WishListEvents $event){
 
-        $customerId = $this->getSession()->getCustomerUser()->getId();
+        $addProductToWishList = new \WishList\Model\WishList();
 
-        if(null == $this->getExistingObject($customerId, $productId)){
-            $data = array('product_id' => $productId, 'user_id' => $customerId);
-
-            $event = $this->createEventInstance($data);
-            $this->dispatch(WishListEvents::WISHLIST_ADD_PRODUCT, $event);
-        }
-
-        $this->redirect('/');
+        $addProductToWishList
+            ->setProductId($event->getProductId())
+            ->setCustomerId($event->getUserId())
+            ->save();
     }
 
     /**
-     * @param $data
-     * @return \WishList\Event\WishListEvents
+     * Returns an array of event names this subscriber wants to listen to.
+     *
+     * The array keys are event names and the value can be:
+     *
+     *  * The method name to call (priority defaults to 0)
+     *  * An array composed of the method name to call and the priority
+     *  * An array of arrays composed of the method names to call and respective
+     *    priorities, or 0 if unset
+     *
+     * For instance:
+     *
+     *  * array('eventName' => 'methodName')
+     *  * array('eventName' => array('methodName', $priority))
+     *  * array('eventName' => array(array('methodName1', $priority), array('methodName2'))
+     *
+     * @return array The event names to listen to
+     *
+     * @api
      */
-    private function createEventInstance($data)
+    public static function getSubscribedEvents()
     {
 
-        $wishListEvent = new WishListEvents(
-            $data['product_id'], $data['user_id']
+        return array(
+            WishListEvents::WISHLIST_ADD_PRODUCT => array('addProduct', 128)
         );
-
-        return $wishListEvent;
     }
-
-    /**
-     * Load an existing object from the database
-     */
-    protected function getExistingObject($customerId, $productId)
-    {
-
-        return WishListQuery::create()
-            ->filterByCustomerId($customerId)
-            ->filterByProductId($productId)
-            ->findOne();
-    }
-
 }
