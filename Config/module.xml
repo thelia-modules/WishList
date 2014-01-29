@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+    <fullnamespace>WishList\WishList</fullnamespace>
+    <descriptive locale="fr_FR">
+        <title>Liste de souhaits</title>
+    </descriptive>
+    <descriptive locale="en_US">
+        <title>Wish list</title>
+    </descriptive>
+    <version>1.0</version>
+    <author>
+        <name>Michaël Espeche</name>
+        <email>mespeche@openstudio.fr</email>
+    </author>
+    <type>classic</type>
+    <thelia>2.0.0</thelia>
+    <stability>alpha</stability>
+</module>
