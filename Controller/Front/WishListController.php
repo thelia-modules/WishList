@@ -38,13 +38,15 @@ class WishListController extends BaseFrontController
 
     public function addProduct($productId){
 
-        $customerId = $this->getSession()->getCustomerUser()->getId();
+        if($customer = $this->getSession()->getCustomerUser()){
+            $customerId = $customer->getId();
 
-        if(null == $this->getExistingObject($customerId, $productId)){
-            $data = array('product_id' => $productId, 'user_id' => $customerId);
+            if(null == $this->getExistingObject($customerId, $productId)){
+                $data = array('product_id' => $productId, 'user_id' => $customerId);
 
-            $event = $this->createEventInstance($data);
-            $this->dispatch(WishListEvents::WISHLIST_ADD_PRODUCT, $event);
+                $event = $this->createEventInstance($data);
+                $this->dispatch(WishListEvents::WISHLIST_ADD_PRODUCT, $event);
+            }
         }
 
         $this->redirect('/');
