@@ -23,6 +23,7 @@
 namespace WishList\Controller\Front;
 
 use Thelia\Controller\Front\BaseFrontController;
+use Thelia\Model\ProductQuery;
 use WishList\Event\WishListEvents;
 use WishList\WishListManager;
 
@@ -51,7 +52,9 @@ class WishListController extends BaseFrontController
             }
         }
 
-        $this->redirect('/');
+        $product = ProductQuery::create()->findPk($productId);
+
+        $this->redirect($product->getUrl($this->getRequest()->getSession()->getLang()->getLocale()));
     }
 
     public function removeProduct($productId){
@@ -72,7 +75,9 @@ class WishListController extends BaseFrontController
             }
         }
 
-        $this->redirect('/');
+        $product = ProductQuery::create()->findPk($productId);
+
+        $this->redirect($product->getUrl($this->getRequest()->getSession()->getLang()->getLocale()));
     }
 
     /**
