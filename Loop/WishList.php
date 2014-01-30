@@ -61,15 +61,17 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
             $productIds[] = $wishlist->getProductId();
         }
 
-        $productIdsList = implode(',', $productIds);
+        if (!empty($productIds)) {
+            $productIdsList = implode(',', $productIds);
 
-        $loopResultRow = new LoopResultRow($wishlist);
+            $loopResultRow = new LoopResultRow($wishlist);
 
-        $loopResultRow
-            ->set("WISHLIST_PRODUCT_LIST", $productIdsList)
-        ;
+            $loopResultRow
+                ->set("WISHLIST_PRODUCT_LIST", $productIdsList)
+            ;
 
-        $loopResult->addRow($loopResultRow);
+            $loopResult->addRow($loopResultRow);
+        }
 
         return $loopResult;
     }
