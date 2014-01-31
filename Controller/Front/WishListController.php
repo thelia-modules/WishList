@@ -52,9 +52,7 @@ class WishListController extends BaseFrontController
             }
         }
 
-        $product = ProductQuery::create()->findPk($productId);
-
-        $this->redirect($product->getUrl($this->getRequest()->getSession()->getLang()->getLocale()));
+        $this->redirect($this->getRequest()->headers->get('referer'));
     }
 
     public function removeProduct($productId){
@@ -75,9 +73,7 @@ class WishListController extends BaseFrontController
             }
         }
 
-        $product = ProductQuery::create()->findPk($productId);
-
-        $this->redirect($product->getUrl($this->getRequest()->getSession()->getLang()->getLocale()));
+        $this->redirect($this->getRequest()->headers->get('referer'));
     }
 
     /**
