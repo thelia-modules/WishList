@@ -38,7 +38,7 @@ class WishListController extends BaseFrontController
 
     public function addProduct($productId){
 
-        if($customer = $this->getSession()->getCustomerUser()){
+        if($customer = $this->getSecurityContext()->getCustomerUser()){
             $customerId = $customer->getId();
 
             if(null === WishListQuery::getExistingObject($customerId, $productId)){
@@ -54,7 +54,7 @@ class WishListController extends BaseFrontController
 
     public function removeProduct($productId){
 
-        if($customer = $this->getSession()->getCustomerUser()){
+        if($customer = $this->getSecurityContext()->getCustomerUser()){
             $customerId = $customer->getId();
 
             if(null !== $wishList = WishListQuery::getExistingObject($customerId, $productId)){
