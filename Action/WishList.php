@@ -36,7 +36,7 @@ use WishList\Model\Base\WishListQuery;
  * @package WishList\Action
  * @author Michaël Espeche <mespeche@openstudio.fr>
  */
-class WishList extends BaseAction implements EventSubscriberInterface
+class WishList implements EventSubscriberInterface
 {
 
     public function addProduct(WishListEvents $event){
@@ -53,8 +53,7 @@ class WishList extends BaseAction implements EventSubscriberInterface
 
         if (null !== $wishList = WishListQuery::create()->findPk($event->getWishList())) {
 
-            $wishList->setDispatcher($this->getDispatcher())
-                ->delete();
+            $wishList->delete();
 
             $event->setWishList($wishList);
         }
