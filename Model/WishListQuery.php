@@ -23,10 +23,10 @@ class WishListQuery extends BaseWishListQuery
      */
     public static function getExistingObject($customerId, $productId)
     {
-        return self
-            ::filterByCustomerId($customerId)
-            ::filterByProductId($productId)
-            ::findOne();
+        return self::create()
+            ->filterByCustomerId($customerId)
+            ->filterByProductId($productId)
+            ->findOne();
     }
 
 } // WishListQuery
