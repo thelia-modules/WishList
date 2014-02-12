@@ -4,7 +4,6 @@ namespace WishList\Model;
 
 use WishList\Model\Base\WishListQuery as BaseWishListQuery;
 
-
 /**
  * Skeleton subclass for performing query and update operations on the 'wish_list' table.
  *

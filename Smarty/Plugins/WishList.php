@@ -39,14 +39,14 @@ class WishList extends AbstractSmartyPlugin
 
         $this->request = $request;
 
-        if($session = $this->request->getSession()->getCustomerUser()){
+        if ($session = $this->request->getSession()->getCustomerUser()) {
             $this->userId = $session->getId();
         }
 
     }
 
-    public function inWishList($params){
-
+    public function inWishList($params)
+    {
         $ret = false;
 
         if (isset($params['product_id'])) {
@@ -60,7 +60,6 @@ class WishList extends AbstractSmartyPlugin
         return $ret;
 
     }
-
 
     /**
      * @return an array of SmartyPluginDescriptor

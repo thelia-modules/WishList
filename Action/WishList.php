@@ -24,7 +24,6 @@
 namespace WishList\Action;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Thelia\Action\BaseAction;
 use WishList\Event\WishListEvents;
 use WishList\Model\Base\WishListQuery;
 
@@ -39,8 +38,8 @@ use WishList\Model\Base\WishListQuery;
 class WishList implements EventSubscriberInterface
 {
 
-    public function addProduct(WishListEvents $event){
-
+    public function addProduct(WishListEvents $event)
+    {
         $addProductToWishList = new \WishList\Model\WishList();
 
         $addProductToWishList
@@ -49,8 +48,8 @@ class WishList implements EventSubscriberInterface
             ->save();
     }
 
-    public function removeProduct(WishListEvents $event){
-
+    public function removeProduct(WishListEvents $event)
+    {
         if (null !== $wishList = WishListQuery::create()->findPk($event->getWishList())) {
 
             $wishList->delete();
@@ -82,7 +81,6 @@ class WishList implements EventSubscriberInterface
      */
     public static function getSubscribedEvents()
     {
-
         return array(
             WishListEvents::WISHLIST_ADD_PRODUCT => array('addProduct', 128),
             WishListEvents::WISHLIST_REMOVE_PRODUCT => array('removeProduct', 128)

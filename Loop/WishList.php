@@ -134,5 +134,4 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
         return $search;
     }
 
-
 }

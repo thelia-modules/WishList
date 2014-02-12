@@ -49,7 +49,7 @@ class WishListEvents extends ActionEvent
     protected $productId;
     protected $wishList;
 
-    function __construct($productId, $userId)
+    public function __construct($productId, $userId)
     {
         $this->productId = $productId;
         $this->userId = $userId;

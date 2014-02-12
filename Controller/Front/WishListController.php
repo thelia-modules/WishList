@@ -36,12 +36,12 @@ use WishList\Model\WishListQuery;
 class WishListController extends BaseFrontController
 {
 
-    public function addProduct($productId){
-
-        if($customer = $this->getSecurityContext()->getCustomerUser()){
+    public function addProduct($productId)
+    {
+        if ($customer = $this->getSecurityContext()->getCustomerUser()) {
             $customerId = $customer->getId();
 
-            if(null === WishListQuery::getExistingObject($customerId, $productId)){
+            if (null === WishListQuery::getExistingObject($customerId, $productId)) {
                 $data = array('product_id' => $productId, 'user_id' => $customerId);
 
                 $event = $this->createEventInstance($data);
@@ -52,12 +52,12 @@ class WishListController extends BaseFrontController
         $this->redirect($this->getRequest()->headers->get('referer'));
     }
 
-    public function removeProduct($productId){
-
-        if($customer = $this->getSecurityContext()->getCustomerUser()){
+    public function removeProduct($productId)
+    {
+        if ($customer = $this->getSecurityContext()->getCustomerUser()) {
             $customerId = $customer->getId();
 
-            if(null !== $wishList = WishListQuery::getExistingObject($customerId, $productId)){
+            if (null !== $wishList = WishListQuery::getExistingObject($customerId, $productId)) {
 
                 $data = array('product_id' => $productId, 'user_id' => $customerId);
 
