@@ -18,4 +18,15 @@ use WishList\Model\Base\WishListQuery as BaseWishListQuery;
 class WishListQuery extends BaseWishListQuery
 {
 
+    /**
+     * Load an existing object from the database
+     */
+    public static function getExistingObject($customerId, $productId)
+    {
+        return self
+            ::filterByCustomerId($customerId)
+            ::filterByProductId($productId)
+            ::findOne();
+    }
+
 } // WishListQuery

@@ -23,9 +23,8 @@
 namespace WishList\Controller\Front;
 
 use Thelia\Controller\Front\BaseFrontController;
-use Thelia\Model\ProductQuery;
 use WishList\Event\WishListEvents;
-use WishList\WishListManager;
+use WishList\Model\WishListQuery;
 
 /**
  *
@@ -42,9 +41,7 @@ class WishListController extends BaseFrontController
         if($customer = $this->getSession()->getCustomerUser()){
             $customerId = $customer->getId();
 
-            $wishListManager = new WishListManager();
-
-            if(null === $wishListManager->getExistingObject($customerId, $productId)){
+            if(null === WishListQuery::getExistingObject($customerId, $productId)){
                 $data = array('product_id' => $productId, 'user_id' => $customerId);
 
                 $event = $this->createEventInstance($data);
@@ -60,9 +57,7 @@ class WishListController extends BaseFrontController
         if($customer = $this->getSession()->getCustomerUser()){
             $customerId = $customer->getId();
 
-            $wishListManager = new WishListManager();
-
-            if(null !== $wishList = $wishListManager->getExistingObject($customerId, $productId)){
+            if(null !== $wishList = WishListQuery::getExistingObject($customerId, $productId)){
 
                 $data = array('product_id' => $productId, 'user_id' => $customerId);
 

@@ -26,7 +26,7 @@ namespace WishList\Smarty\Plugins;
 use Thelia\Core\HttpFoundation\Request;
 use Thelia\Core\Template\Smarty\AbstractSmartyPlugin;
 use Thelia\Core\Template\Smarty\SmartyPluginDescriptor;
-use WishList\WishListManager;
+use WishList\Model\WishListQuery;
 
 class WishList extends AbstractSmartyPlugin
 {
@@ -50,9 +50,8 @@ class WishList extends AbstractSmartyPlugin
         $ret = false;
 
         if (isset($params['product_id'])) {
-            $wishListManager = new WishListManager();
 
-            $wishListAssociationExist = $wishListManager->getExistingObject($this->userId, $params['product_id']);
+            $wishListAssociationExist = WishListQuery::getExistingObject($this->userId, $params['product_id']);
             if (null !== $wishListAssociationExist) {
                 $ret = true;
             }
