@@ -10,7 +10,7 @@ You can download the .zip file of this module or create a git submodule into you
 
 ```
 cd /path-to-thelia
-git submodule add https://github.com/thelia-modules/Wishlist.git local/modules/WishList
+git submodule add https://github.com/thelia-modules/WishList.git local/modules/WishList
 ```
 
 Next, go to your Thelia admin panel for module activation.
