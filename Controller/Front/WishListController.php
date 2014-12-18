@@ -49,7 +49,7 @@ class WishListController extends BaseFrontController
             }
         }
 
-        $this->redirect($this->getRequest()->headers->get('referer'));
+        $this->redirect($this->getRequest()->headers->get('referer'), 301);
     }
 
     public function removeProduct($productId)
@@ -68,7 +68,7 @@ class WishListController extends BaseFrontController
             }
         }
 
-        $this->redirect($this->getRequest()->headers->get('referer'));
+        $this->redirect($this->getRequest()->headers->get('referer'), 301);
     }
 
     /**
