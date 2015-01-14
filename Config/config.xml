@@ -32,8 +32,7 @@
             <tag name="thelia.parser.register_plugin"/>
         </service>
 
-        <service id="wishList.action" class="WishList\Action\WishList" scope="request">
-            <argument type="service" id="request"/>
+        <service id="wishList.action" class="WishList\Action\WishList">
             <tag name="kernel.event_subscriber"/>
         </service>
     </services>
