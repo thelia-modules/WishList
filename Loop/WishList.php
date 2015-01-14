@@ -24,14 +24,15 @@
 namespace WishList\Loop;
 
 use Propel\Runtime\ActiveQuery\Criteria;
+use Thelia\Core\Template\Element\ArraySearchLoopInterface;
 use Thelia\Core\Template\Element\BaseLoop;
 use Thelia\Core\Template\Element\LoopResult;
 use Thelia\Core\Template\Element\LoopResultRow;
-use Thelia\Core\Template\Element\PropelSearchLoopInterface;
 use Thelia\Core\Template\Loop\Argument\Argument;
 use Thelia\Core\Template\Loop\Argument\ArgumentCollection;
 use Thelia\Type\IntListType;
 use Thelia\Type\TypeCollection;
+use WishList\Controller\Front\WishListController;
 use WishList\Model\Base\WishListQuery;
 
 /**
@@ -43,38 +44,9 @@ use WishList\Model\Base\WishListQuery;
  * @package WishList\Loop
  * @author Michaël Espeche <mespeche@openstudio.fr>
  */
-class WishList extends BaseLoop implements PropelSearchLoopInterface
+class WishList extends BaseLoop implements ArraySearchLoopInterface
 {
-    protected $timestampable = true;
-
-    /**
-     * @param LoopResult $loopResult
-     *
-     * @return LoopResult
-     */
-    public function parseResults(LoopResult $loopResult)
-    {
-
-        $productIds = array();
-
-        foreach ($loopResult->getResultDataCollection() as $wishlist) {
-            $productIds[] = $wishlist->getProductId();
-        }
-
-        if (!empty($productIds)) {
-            $productIdsList = implode(',', $productIds);
-
-            $loopResultRow = new LoopResultRow($wishlist);
-
-            $loopResultRow
-                ->set("WISHLIST_PRODUCT_LIST", $productIdsList)
-            ;
-
-            $loopResult->addRow($loopResultRow);
-        }
-
-        return $loopResult;
-    }
+    protected $timestampable = false;
 
     /**
      *
@@ -121,17 +93,58 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
     }
 
     /**
-     * this method returns a Propel ModelCriteria
-     *
-     * @return \Propel\Runtime\ActiveQuery\ModelCriteria
+     * Return array of search results
+     * @return array|mixed|null
      */
-    public function buildModelCriteria()
+    public function buildArray()
     {
-        $search = WishListQuery::create();
+        $search = null;
 
-        $search->filterByCustomerId($this->getCustomer(), Criteria::IN);
+        if ($this->getCustomer() != null) {
+            $wishList = WishListQuery::create()->filterByCustomerId($this->getCustomer(), Criteria::IN);
+
+            $wishArray = array();
+            foreach($wishList as $data) {
+                $wishArray[] = $data->getProductId();
+            }
+
+            $search = $wishArray;
+        } else {
+            $search = $this->request->getSession()->get(WishListController::SESSION_NAME);
+        }
 
         return $search;
     }
+
+    /**
+     * @param LoopResult $loopResult
+     *
+     * @return LoopResult
+     */
+    public function parseResults(LoopResult $loopResult)
+    {
+
+        $productIds = array();
+
+        foreach ($loopResult->getResultDataCollection() as $wishlist) {
+            $productIds[] = $wishlist;
+        }
+
+        if (!empty($productIds)) {
+            $productIdsList = implode(',', $productIds);
+
+            $loopResultRow = new LoopResultRow($wishlist);
+
+            $loopResultRow
+                ->set("WISHLIST_PRODUCT_LIST", $productIdsList)
+            ;
+
+            $loopResult->addRow($loopResultRow);
+        }
+
+        return $loopResult;
+    }
+
+
 
 }

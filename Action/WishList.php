@@ -24,6 +24,10 @@
 namespace WishList\Action;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Thelia\Core\Event\Customer\CustomerEvent;
+use Thelia\Core\Event\TheliaEvents;
+use Thelia\Core\HttpFoundation\Request;
+use WishList\Controller\Front\WishListController;
 use WishList\Event\WishListEvents;
 use WishList\Model\Base\WishListQuery;
 
@@ -37,6 +41,14 @@ use WishList\Model\Base\WishListQuery;
  */
 class WishList implements EventSubscriberInterface
 {
+
+
+    protected $request;
+
+    public function __construct(Request $request)
+    {
+        $this->request = $request;
+    }
 
     public function addProduct(WishListEvents $event)
     {
@@ -57,6 +69,22 @@ class WishList implements EventSubscriberInterface
             $event->setWishList($wishList);
         }
 
+    }
+
+    /**
+     * Generate current customer session containing wishlist
+     * @param CustomerEvent $event
+     */
+    public function createSession(CustomerEvent $event)
+    {
+        $wishList = WishListQuery::create()->findByCustomerId($event->getCustomer()->getId());
+
+        $wishArray = array();
+        foreach($wishList as $data) {
+            $wishArray[] = $data->getProductId();
+        }
+
+        $this->request->getSession()->set(WishListController::SESSION_NAME, $wishArray);
     }
 
     /**
@@ -83,7 +111,8 @@ class WishList implements EventSubscriberInterface
     {
         return array(
             WishListEvents::WISHLIST_ADD_PRODUCT => array('addProduct', 128),
-            WishListEvents::WISHLIST_REMOVE_PRODUCT => array('removeProduct', 128)
+            WishListEvents::WISHLIST_REMOVE_PRODUCT => array('removeProduct', 128),
+            TheliaEvents::CUSTOMER_LOGIN => array('createSession', 128)
         );
     }
 }
