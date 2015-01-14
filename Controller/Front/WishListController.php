@@ -22,6 +22,8 @@
 /*************************************************************************************/
 namespace WishList\Controller\Front;
 
+use Symfony\Component\Routing\Generator\UrlGenerator;
+use Symfony\Component\Validator\Constraints\Null;
 use Thelia\Controller\Front\BaseFrontController;
 use WishList\Event\WishListEvents;
 use WishList\Model\WishListQuery;
@@ -36,24 +38,62 @@ use WishList\Model\WishListQuery;
 class WishListController extends BaseFrontController
 {
 
+    const SESSION_NAME = 'WishList';
+
+    /**
+     * Add a product to the wishlist
+     * @param $productId
+     */
     public function addProduct($productId)
     {
+        $session = $this->getSession()->get(self::SESSION_NAME);
+
+        if ($session == null) {
+            $session = array();
+        }
+
+        if (!in_array($productId, $session)) {
+            $session[] = $productId;
+        }
+
         if ($customer = $this->getSecurityContext()->getCustomerUser()) {
             $customerId = $customer->getId();
+
+            $wish = WishListQuery::create()->findByCustomerId($customerId);
+            $wishArray = array();
+            foreach($wish as $data) {
+                $wishArray[] = $data->getProductId();
+            }
 
             if (null === WishListQuery::getExistingObject($customerId, $productId)) {
                 $data = array('product_id' => $productId, 'user_id' => $customerId);
 
                 $event = $this->createEventInstance($data);
                 $this->dispatch(WishListEvents::WISHLIST_ADD_PRODUCT, $event);
+
+                $session = array_unique(array_merge($wishArray, $session));
             }
+
         }
 
-        $this->generateRedirect($this->getRequest()->headers->get('referer'), 301);
+        $this->getSession()->set(self::SESSION_NAME, $session);
+
+        return $this->generateRedirect($this->getSession()->getReturnToUrl(), 301);
+
     }
 
     public function removeProduct($productId)
     {
+
+        $session = $this->getSession()->get(self::SESSION_NAME);
+
+        if (!empty($session) && in_array($productId, $session)) {
+            $key = array_search($productId, $session);
+            unset($session[$key]);
+
+            $this->getSession()->set(self::SESSION_NAME, $session);
+        }
+
         if ($customer = $this->getSecurityContext()->getCustomerUser()) {
             $customerId = $customer->getId();
 
@@ -68,7 +108,8 @@ class WishListController extends BaseFrontController
             }
         }
 
-        $this->generateRedirect($this->getRequest()->headers->get('referer'), 301);
+        return $this->generateRedirect($this->getSession()->getReturnToUrl(), 301);
+
     }
 
     /**
