@@ -21,28 +21,36 @@ This module is very easy to use. It provides you a new loop "wishlist" type, whi
 
 To add a product in a wish list, you must give access to a link which should be "/wishlist/remove/PRODUCT_ID".
 To remove a product from the wish list, you must give access to a link which should be "/wishlist/remove/PRODUCT_ID".
+To clear all product from the wish list, you must give access to a link which should be "/wishlist/clear".
 
 The argument ```PRODUCT_ID``` corresponds to the product id to add or remove from your wish list.
 
-A new Smarty function is available to verify if a product is already in wish list : __{in_wishlist product_id="PRODUCT_ID"}__
+Tow Smarty functions are availables :
+
+- to verify if a product is already in wish list : __{in_wishlist product_id="PRODUCT_ID"}__
+- to verify if a product is realy in database wish list : __{is_saved_in_wishlist product_id="PRODUCT_ID"}__
 
 ```html
 {* $ID = product ID *}
 
 {if {in_wishlist product_id="$ID"}}
     <a href="{url path="/wishlist/remove/$ID"}">{intl l="Remove from wish list"}</a>
+    
+    {loop type="auth" name="customer_info_block" role="CUSTOMER"}
+        {if !{is_saved_in_wishlist product_id="$ID"}}
+            <p>This product is not really in your wish list. To really add, click the button below.</p>
+            <a class="btn btn-default" href="{url path="/wishlist/add/$ID"}">{intl l="Add to wish list"}</a>
+        {/if}
+    {/loop}
 {else}
     <a href="{url path="/wishlist/add/$ID"}">{intl l="Add to wish list"}</a>
 {/if}
 ```
 
-> Caution: Adding and deleting a product to a wish list can only be done by a connected client.
-> Indeed, his wish list remains private and will always be available on his personal space as it will not have it emptied.
-
 Here is an example of using the "wishlist" loop :
 
 ```html
-{loop name="wishlist" type="wishlist" customer="{customer attr="id"}"}
+{loop name="wishlist" type="wishlist"}
     {loop name="products-in-wishlist" type="product" id="{$WISHLIST_PRODUCT_LIST}"}
         <h1>{$TITLE}</h1>
         <p>{$DESCRIPTION|truncate:100 nofilter}</p>
