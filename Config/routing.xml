@@ -13,4 +13,8 @@
         <requirement key="productId">\d+</requirement>
     </route>
 
+    <route id="front.wishlist.clear" path="/wishlist/clear">
+        <default key="_controller">WishList\Controller\Front\WishListController::clear</default>
+    </route>
+
 </routes>

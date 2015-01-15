@@ -63,13 +63,29 @@ class WishList extends AbstractSmartyPlugin
 
     }
 
+    public function inSavedInWishList($params) {
+        $ret = false;
+
+        if (isset($params['product_id'])) {
+
+            $wishListAssociationExist = WishListQuery::getExistingObject($this->userId, $params['product_id']);
+
+            if (null !== $wishListAssociationExist) {
+                $ret = true;
+            }
+        }
+
+        return $ret;
+    }
+
     /**
      * @return an array of SmartyPluginDescriptor
      */
     public function getPluginDescriptors()
     {
         return array(
-            new SmartyPluginDescriptor("function", "in_wishlist", $this, "inWishList")
+            new SmartyPluginDescriptor("function", "in_wishlist", $this, "inWishList"),
+            new SmartyPluginDescriptor("function", "is_saved_in_wishlist", $this, "inSavedInWishList")
         );
     }
 }

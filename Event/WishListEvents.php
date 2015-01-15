@@ -45,11 +45,13 @@ class WishListEvents extends ActionEvent
     const BEFORE_WISHLIST_REMOVE_PRODUCT   = 'whishList.action.beforeRemoveProduct';
     const AFTER_WISHLIST_REMOVE_PRODUCT    = 'whishList.action.afterRemoveProduct';
 
+    const WISHLIST_CLEAR    = 'whishList.action.clear';
+
     protected $userId;
     protected $productId;
     protected $wishList;
 
-    public function __construct($productId, $userId)
+    public function __construct($productId = null, $userId)
     {
         $this->productId = $productId;
         $this->userId = $userId;

@@ -22,8 +22,6 @@
 /*************************************************************************************/
 namespace WishList\Controller\Front;
 
-use Symfony\Component\Routing\Generator\UrlGenerator;
-use Symfony\Component\Validator\Constraints\Null;
 use Thelia\Controller\Front\BaseFrontController;
 use WishList\Event\WishListEvents;
 use WishList\Model\WishListQuery;
@@ -110,6 +108,25 @@ class WishListController extends BaseFrontController
 
         return $this->generateRedirect($this->getSession()->getReturnToUrl(), 301);
 
+    }
+
+    public function clear() {
+        $this->getSession()->remove(self::SESSION_NAME);
+
+        if ($customer = $this->getSecurityContext()->getCustomerUser()) {
+            $customerId = $customer->getId();
+
+            if (null !== $wishList = WishListQuery::create()->findOneByCustomerId($customerId)) {
+                $data = array('product_id' => null, 'user_id' => $customerId);
+
+                $event = $this->createEventInstance($data);
+                $event->setUserId($customerId);
+
+                $this->dispatch(WishListEvents::WISHLIST_CLEAR, $event);
+            }
+        }
+
+        return $this->generateRedirect($this->getSession()->getReturnToUrl(), 301);
     }
 
     /**

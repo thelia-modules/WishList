@@ -49,15 +49,14 @@ class WishList extends BaseLoop implements ArraySearchLoopInterface
     protected $timestampable = false;
 
     /**
-     *
-     * define all args used in your loop
-     *
+     * Definition of loop arguments
      *
      * example :
      *
      * public function getArgDefinitions()
      * {
      *  return new ArgumentCollection(
+     *
      *       Argument::createIntListTypeArgument('id'),
      *           new Argument(
      *           'ref',
@@ -67,14 +66,7 @@ class WishList extends BaseLoop implements ArraySearchLoopInterface
      *       ),
      *       Argument::createIntListTypeArgument('category'),
      *       Argument::createBooleanTypeArgument('new'),
-     *       Argument::createBooleanTypeArgument('promo'),
-     *       Argument::createFloatTypeArgument('min_price'),
-     *       Argument::createFloatTypeArgument('max_price'),
-     *       Argument::createIntTypeArgument('min_stock'),
-     *       Argument::createFloatTypeArgument('min_weight'),
-     *       Argument::createFloatTypeArgument('max_weight'),
-     *       Argument::createBooleanTypeArgument('current'),
-     *
+     *       ...
      *   );
      * }
      *
@@ -82,14 +74,7 @@ class WishList extends BaseLoop implements ArraySearchLoopInterface
      */
     protected function getArgDefinitions()
     {
-        return new ArgumentCollection(
-            new Argument(
-                'customer',
-                new TypeCollection(
-                    new IntListType()
-                )
-            )
-        );
+        return new ArgumentCollection();
     }
 
     /**
@@ -100,15 +85,23 @@ class WishList extends BaseLoop implements ArraySearchLoopInterface
     {
         $search = null;
 
-        if ($this->getCustomer() != null) {
-            $wishList = WishListQuery::create()->filterByCustomerId($this->getCustomer(), Criteria::IN);
+        if ($this->securityContext->hasCustomerUser()) {
+            $customer = $this->securityContext->getCustomerUser();
+            $customerId = $customer->getId();
+        }
+
+        if ($customerId != null) {
+            $wishList = WishListQuery::create()->filterByCustomerId($customerId, Criteria::IN);
 
             $wishArray = array();
             foreach($wishList as $data) {
                 $wishArray[] = $data->getProductId();
             }
 
-            $search = $wishArray;
+            if ($session = $this->request->getSession()->get(WishListController::SESSION_NAME)) {
+                $search = array_unique(array_merge($wishArray, $session));
+            }
+
         } else {
             $search = $this->request->getSession()->get(WishListController::SESSION_NAME);
         }
@@ -144,7 +137,4 @@ class WishList extends BaseLoop implements ArraySearchLoopInterface
 
         return $loopResult;
     }
-
-
-
 }

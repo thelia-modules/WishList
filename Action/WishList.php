@@ -60,6 +60,12 @@ class WishList implements EventSubscriberInterface
 
     }
 
+    public function clear(WishListEvents $event) {
+        if (null !== $wishList = WishListQuery::create()->findOneByCustomerId($event->getUserId())) {
+            WishListQuery::create()->filterByCustomerId($event->getUserId())->delete();
+        }
+    }
+
     /**
      * Generate current customer session containing wishlist
      * @param CustomerEvent $event
@@ -100,7 +106,8 @@ class WishList implements EventSubscriberInterface
     {
         return array(
             WishListEvents::WISHLIST_ADD_PRODUCT => array('addProduct', 128),
-            WishListEvents::WISHLIST_REMOVE_PRODUCT => array('removeProduct', 128)
+            WishListEvents::WISHLIST_REMOVE_PRODUCT => array('removeProduct', 128),
+            WishListEvents::WISHLIST_CLEAR => array('clear', 128)
         );
     }
 }
