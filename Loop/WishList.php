@@ -28,10 +28,7 @@ use Thelia\Core\Template\Element\ArraySearchLoopInterface;
 use Thelia\Core\Template\Element\BaseLoop;
 use Thelia\Core\Template\Element\LoopResult;
 use Thelia\Core\Template\Element\LoopResultRow;
-use Thelia\Core\Template\Loop\Argument\Argument;
 use Thelia\Core\Template\Loop\Argument\ArgumentCollection;
-use Thelia\Type\IntListType;
-use Thelia\Type\TypeCollection;
 use WishList\Controller\Front\WishListController;
 use WishList\Model\Base\WishListQuery;
 

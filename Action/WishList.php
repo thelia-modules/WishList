@@ -24,7 +24,6 @@
 namespace WishList\Action;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Thelia\Core\Event\Customer\CustomerEvent;
 use WishList\Event\WishListEvents;
 use WishList\Model\Base\WishListQuery;
 
@@ -39,6 +38,12 @@ use WishList\Model\Base\WishListQuery;
 class WishList implements EventSubscriberInterface
 {
 
+    /**
+     * Add a product to wishlist
+     * @param WishListEvents $event
+     * @throws \Exception
+     * @throws \Propel\Runtime\Exception\PropelException
+     */
     public function addProduct(WishListEvents $event)
     {
         $addProductToWishList = new \WishList\Model\WishList();
@@ -49,6 +54,12 @@ class WishList implements EventSubscriberInterface
             ->save();
     }
 
+    /**
+     * Remove product from wishlist
+     * @param WishListEvents $event
+     * @throws \Exception
+     * @throws \Propel\Runtime\Exception\PropelException
+     */
     public function removeProduct(WishListEvents $event)
     {
         if (null !== $wishList = WishListQuery::create()->findPk($event->getWishList())) {
@@ -60,27 +71,17 @@ class WishList implements EventSubscriberInterface
 
     }
 
+    /**
+     * Clear wishlist completly
+     * @param WishListEvents $event
+     * @throws \Exception
+     * @throws \Propel\Runtime\Exception\PropelException
+     */
     public function clear(WishListEvents $event) {
         if (null !== $wishList = WishListQuery::create()->findOneByCustomerId($event->getUserId())) {
             WishListQuery::create()->filterByCustomerId($event->getUserId())->delete();
         }
     }
-
-    /**
-     * Generate current customer session containing wishlist
-     * @param CustomerEvent $event
-     */
-    /*public function createSession(CustomerEvent $event)
-    {
-        $wishList = WishListQuery::create()->findByCustomerId($event->getCustomer()->getId());
-
-        $wishArray = array();
-        foreach($wishList as $data) {
-            $wishArray[] = $data->getProductId();
-        }
-
-        $this->request->getSession()->set(WishListController::SESSION_NAME, $wishArray);
-    }*/
 
     /**
      * Returns an array of event names this subscriber wants to listen to.

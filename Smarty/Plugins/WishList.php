@@ -45,6 +45,11 @@ class WishList extends AbstractSmartyPlugin
 
     }
 
+    /**
+     * Check if product is in wishlist
+     * @param $params
+     * @return bool
+     */
     public function inWishList($params)
     {
         $ret = false;
@@ -63,7 +68,13 @@ class WishList extends AbstractSmartyPlugin
 
     }
 
-    public function inSavedInWishList($params) {
+    /**
+     * Check if product if realy into database wishlist
+     * @param $params
+     * @return bool
+     */
+    public function inSavedInWishList($params)
+    {
         $ret = false;
 
         if (isset($params['product_id'])) {
