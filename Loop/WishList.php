@@ -91,7 +91,7 @@ class WishList extends BaseLoop implements ArraySearchLoopInterface
             $wishList = WishListQuery::create()->filterByCustomerId($customerId, Criteria::IN);
 
             $wishArray = array();
-            foreach($wishList as $data) {
+            foreach ($wishList as $data) {
                 $wishArray[] = $data->getProductId();
             }
 

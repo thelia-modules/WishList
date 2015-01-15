@@ -62,7 +62,7 @@ class WishListController extends BaseFrontController
             // Create array of product realy in wishlist
             $wish = WishListQuery::create()->findByCustomerId($customerId);
             $wishArray = array();
-            foreach($wish as $data) {
+            foreach ($wish as $data) {
                 $wishArray[] = $data->getProductId();
             }
 
@@ -131,8 +131,8 @@ class WishListController extends BaseFrontController
      * Clear wishlist completly
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function clear() {
-
+    public function clear()
+    {
         // Clear session of wishlist
         $this->getSession()->remove(self::SESSION_NAME);
 

@@ -40,7 +40,7 @@ class WishList implements EventSubscriberInterface
 
     /**
      * Add a product to wishlist
-     * @param WishListEvents $event
+     * @param  WishListEvents                            $event
      * @throws \Exception
      * @throws \Propel\Runtime\Exception\PropelException
      */
@@ -56,7 +56,7 @@ class WishList implements EventSubscriberInterface
 
     /**
      * Remove product from wishlist
-     * @param WishListEvents $event
+     * @param  WishListEvents                            $event
      * @throws \Exception
      * @throws \Propel\Runtime\Exception\PropelException
      */
@@ -73,11 +73,12 @@ class WishList implements EventSubscriberInterface
 
     /**
      * Clear wishlist completly
-     * @param WishListEvents $event
+     * @param  WishListEvents                            $event
      * @throws \Exception
      * @throws \Propel\Runtime\Exception\PropelException
      */
-    public function clear(WishListEvents $event) {
+    public function clear(WishListEvents $event)
+    {
         if (null !== $wishList = WishListQuery::create()->findOneByCustomerId($event->getUserId())) {
             WishListQuery::create()->filterByCustomerId($event->getUserId())->delete();
         }
