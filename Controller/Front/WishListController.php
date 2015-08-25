@@ -1,7 +1,7 @@
 <?php
 /*************************************************************************************/
 /*                                                                                   */
-/*      Thelia	                                                                     */
+/*      Thelia                                                                       */
 /*                                                                                   */
 /*      Copyright (c) OpenStudio                                                     */
 /*      email : info@thelia.net                                                      */
@@ -17,7 +17,7 @@
 /*      GNU General Public License for more details.                                 */
 /*                                                                                   */
 /*      You should have received a copy of the GNU General Public License            */
-/*	    along with this program. If not, see <http://www.gnu.org/licenses/>.         */
+/*      along with this program. If not, see <http://www.gnu.org/licenses/>.         */
 /*                                                                                   */
 /*************************************************************************************/
 namespace WishList\Controller\Front;
@@ -25,6 +25,7 @@ namespace WishList\Controller\Front;
 use Thelia\Controller\Front\BaseFrontController;
 use WishList\Event\WishListEvents;
 use WishList\Model\WishListQuery;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  *
@@ -42,8 +43,9 @@ class WishListController extends BaseFrontController
      * Add a product to wishlist
      * @param $productId
      */
-    public function addProduct($productId)
+    public function addProduct($productId, $json)
     {
+        $status = 'NOTLOGGED';
         $session = $this->getSession()->get(self::SESSION_NAME);
 
         if ($session == null) {
@@ -76,12 +78,18 @@ class WishListController extends BaseFrontController
 
                 // Merge session & database wishlist
                 $session = array_unique(array_merge($wishArray, $session));
+                $status = 'ADD';
+            } else {
+                $status = 'DUPLICATE';
             }
 
         }
 
         $this->getSession()->set(self::SESSION_NAME, $session);
 
+        if ($json == 1) {
+            return new JsonResponse($status);
+        }
         return $this->generateRedirect($this->getSession()->getReturnToUrl(), 301);
 
     }
