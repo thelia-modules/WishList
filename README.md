@@ -19,7 +19,7 @@ Next, go to your Thelia admin panel for module activation.
 
 This module is very easy to use. It provides you a new loop "wishlist" type, which will list all the products added to your wish list.
 
-To add a product in a wish list, you must give access to a link which should be "/wishlist/remove/PRODUCT_ID".
+To add a product in a wish list, you must give access to a link which should be "/wishlist/add/PRODUCT_ID".
 To remove a product from the wish list, you must give access to a link which should be "/wishlist/remove/PRODUCT_ID".
 To clear all product from the wish list, you must give access to a link which should be "/wishlist/clear".
 
