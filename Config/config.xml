@@ -8,24 +8,6 @@
         <loop name="wishlist" class="WishList\Loop\WishList" />
     </loops>
 
-    <forms>
-        <!--
-        <form name="MyFormName" class="MyModule\Form\MySuperForm" />
-        -->
-    </forms>
-
-    <commands>
-        <!--
-        <command class="MyModule\Command\MySuperCommand" />
-        -->
-    </commands>
-
-    <templateDirectives>
-        <!-- Sample definition
-        <templateDirectives class="MyModule\Directive\MyTemplateDirective" name="my_filter"/>
-        -->
-    </templateDirectives>
-
     <services>
         <service id="wishList.smarty.plugin" class="WishList\Smarty\Plugins\WishList" scope="request">
             <argument type="service" id="request"/>
@@ -33,6 +15,12 @@
         </service>
 
         <service id="wishList.action" class="WishList\Action\WishList">
+            <tag name="kernel.event_subscriber"/>
+        </service>
+
+        <service id="wishList.customer.listener" class="WishList\EventListener\CustomerListener">
+            <argument type="service" id="request_stack"/>
+            <argument type="service" id="thelia.securityContext"/>
             <tag name="kernel.event_subscriber"/>
         </service>
     </services>
