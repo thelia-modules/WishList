@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\SecurityContext;
 use WishList\Controller\Front\WishListController;
+use WishList\Model\WishList;
 use WishList\Model\WishListQuery;
 
 /**
@@ -35,9 +36,27 @@ class CustomerListener implements EventSubscriberInterface
     public function customerLogin(Event $event)
     {
         if ($this->securityContext->hasCustomerUser()) {
-            $ids = WishListQuery::create()->filterByCustomerId($this->securityContext->getCustomerUser()->getId())->select('id')->find()->toArray();
+            $productIds = array_unique(
+                array_merge(
+                    is_array($this->requestStack->getCurrentRequest()->getSession()->get(WishListController::SESSION_NAME)) ?
+                        $this->requestStack->getCurrentRequest()->getSession()->get(WishListController::SESSION_NAME) : [],
+                    WishListQuery::create()->filterByCustomerId($this->securityContext->getCustomerUser()->getId())->select('product_id')->find()->toArray()
+                ), SORT_REGULAR
+            );
 
-            $this->requestStack->getCurrentRequest()->getSession()->set(WishListController::SESSION_NAME, $ids);
+            foreach ($productIds as $productId) {
+                if (null === WishListQuery::create()
+                        ->filterByCustomerId($this->securityContext->getCustomerUser()->getId())
+                        ->filterByProductId($productId)
+                        ->findOne()) {
+                    (new WishList())
+                        ->setCustomerId($this->securityContext->getCustomerUser()->getId())
+                        ->setProductId($productId)
+                        ->save();
+                }
+            }
+
+            $this->requestStack->getCurrentRequest()->getSession()->set(WishListController::SESSION_NAME, $productIds);
         }
     }
 
