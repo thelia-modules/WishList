@@ -1,19 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module>
+<module xmlns="http://thelia.net/schema/dic/module"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://thelia.net/schema/dic/module http://thelia.net/schema/dic/module/module-2_2.xsd">
     <fullnamespace>WishList\WishList</fullnamespace>
-    <descriptive locale="fr_FR">
-        <title>Liste de souhaits</title>
-    </descriptive>
     <descriptive locale="en_US">
         <title>Wish list</title>
     </descriptive>
-    <version>1.2.1</version>
-    <author>
-        <name>Michaël Espeche</name>
-        <email>mespeche@openstudio.fr</email>
-        <name>Gilles Bourgeat</name>
-        <email>gbourgeat@openstudio.fr</email>
-    </author>
+    <descriptive locale="fr_FR">
+        <title>Liste de souhaits</title>
+    </descriptive>
+    <languages>
+        <language>en_US</language>
+        <language>fr_FR</language>
+    </languages>
+    <version>1.2.2</version>
+    <authors>
+        <author>
+            <name>Michaël Espeche</name>
+            <email>mespeche@openstudio.fr</email>
+        </author>
+        <author>
+            <name>Gilles Bourgeat</name>
+            <email>gbourgeat@openstudio.fr</email>
+        </author>
+    </authors>
     <type>classic</type>
     <thelia>2.3.0</thelia>
     <stability>prod</stability>
