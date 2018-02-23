@@ -36,13 +36,11 @@ class WishList extends AbstractSmartyPlugin
 
     public function __construct(Request $request)
     {
-
         $this->request = $request;
 
-        if ($session = $this->request->getSession()->getCustomerUser()) {
-            $this->userId = $session->getId();
+        if (null !== $session = $this->request->getSession()) {
+            $this->userId = $session->getCustomerUser()->getId();
         }
-
     }
 
     /**
@@ -65,7 +63,6 @@ class WishList extends AbstractSmartyPlugin
         }
 
         return $ret;
-
     }
 
     /**
