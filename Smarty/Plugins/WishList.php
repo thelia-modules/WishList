@@ -39,7 +39,9 @@ class WishList extends AbstractSmartyPlugin
         $this->request = $request;
 
         if (null !== $session = $this->request->getSession()) {
-            $this->userId = $session->getCustomerUser()->getId();
+            if (null !== $session->getCustomerUser()) {
+                $this->userId = $session->getCustomerUser()->getId();
+            }
         }
     }
 
