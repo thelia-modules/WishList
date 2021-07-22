@@ -27,6 +27,7 @@ use Thelia\Controller\Front\BaseFrontController;
 use WishList\Event\WishListEvents;
 use WishList\Model\WishListQuery;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\Routing\Annotation\Route;
 
 /**
  *
