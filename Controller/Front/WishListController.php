@@ -27,7 +27,6 @@ use Thelia\Controller\Front\BaseFrontController;
 use WishList\Event\WishListEvents;
 use WishList\Model\WishListQuery;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
 
 /**
  *
@@ -44,9 +43,6 @@ class WishListController extends BaseFrontController
     /**
      * Add a product to wishlist
      * @param $productId
-     */
-    /**
-     * @Route("/wishlist/add/{productId}/{json}", name="front.wishlist.add", methods="post")
      */
     public function addProduct($productId, $json, EventDispatcherInterface $eventdispatcher)
     {
@@ -104,9 +100,6 @@ class WishListController extends BaseFrontController
      * @param $productId
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    /**
-     * @Route("/wishlist/remove/{productId}", name="front.wishlist.remove", methods="post")
-     */
     public function removeProduct($productId, EventDispatcherInterface $eventdispatcher)
     {
         $session = $this->getSession()->get(self::SESSION_NAME);
@@ -145,9 +138,6 @@ class WishListController extends BaseFrontController
     /**
      * Clear wishlist completely
      * @return \Symfony\Component\HttpFoundation\Response
-     */
-    /**
-     * @Route("front.wishlist.clear", name="/wishlist/clear", methods="post")
      */
     public function clear(EventDispatcherInterface $eventdispatcher)
     {
