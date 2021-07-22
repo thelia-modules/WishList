@@ -23,79 +23,43 @@
 
 namespace WishList\Smarty\Plugins;
 
-use Thelia\Core\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use TheliaSmarty\Template\AbstractSmartyPlugin;
 use TheliaSmarty\Template\SmartyPluginDescriptor;
-use WishList\Model\WishListQuery;
+use WishList\Service\WishListService;
 
 class WishList extends AbstractSmartyPlugin
 {
 
-    protected $request = null;
-    protected $userId = null;
+    protected $requestStack = null;
+    protected $wishListService = null;
 
-    public function __construct(Request $request)
+    public function __construct(RequestStack $requestStack, WishListService $wishListService)
     {
-        $this->request = $request;
-
-        if (null !== $session = $this->request->getSession()) {
-            if (null !== $session->getCustomerUser()) {
-                $this->userId = $session->getCustomerUser()->getId();
-            }
-        }
+        $this->requestStack = $requestStack;
+        $this->wishListService = $wishListService;
     }
 
     /**
      * Check if product is in wishlist
      * @param $params
-     * @return bool
      */
-    public function inWishList($params)
+    public function inWishList($params) : bool
     {
-        $ret = false;
+        $request = $this->requestStack->getCurrentRequest();
+        $session = $request->getSession()->get(\WishList\Controller\Front\WishListController::SESSION_NAME);
 
-        if (isset($params['product_id'])) {
-
-            $wishListAssociationExist = WishListQuery::getExistingObject($this->userId, $params['product_id']);
-            $session = $this->request->getSession()->get(\WishList\Controller\Front\WishListController::SESSION_NAME);
-
-            if (null !== $wishListAssociationExist || (!empty($session) && in_array($params['product_id'], $session))) {
-                $ret = true;
-            }
-        }
-
-        return $ret;
+        return $this->wishListService->check($request, $params, $session);
     }
 
     /**
-     * Check if product if realy into database wishlist
-     * @param $params
-     * @return bool
-     */
-    public function inSavedInWishList($params)
-    {
-        $ret = false;
-
-        if (isset($params['product_id'])) {
-
-            $wishListAssociationExist = WishListQuery::getExistingObject($this->userId, $params['product_id']);
-
-            if (null !== $wishListAssociationExist) {
-                $ret = true;
-            }
-        }
-
-        return $ret;
-    }
-
-    /**
-     * @return an array of SmartyPluginDescriptor
+     * @return array of SmartyPluginDescriptor
      */
     public function getPluginDescriptors()
     {
-        return array(
+        return [
             new SmartyPluginDescriptor("function", "in_wishlist", $this, "inWishList"),
             new SmartyPluginDescriptor("function", "is_saved_in_wishlist", $this, "inSavedInWishList")
-        );
+        ];
     }
 }

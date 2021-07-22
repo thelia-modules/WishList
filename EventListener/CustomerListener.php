@@ -28,12 +28,12 @@ class CustomerListener implements EventSubscriberInterface
         $this->securityContext = $securityContext;
     }
 
-    public function customerLogout(Event $event)
+    public function customerLogout() : void
     {
         $this->requestStack->getCurrentRequest()->getSession()->set(WishListController::SESSION_NAME, []);
     }
 
-    public function customerLogin(Event $event)
+    public function customerLogin() : void
     {
         if ($this->securityContext->hasCustomerUser()) {
             $productIds = array_unique(
@@ -62,9 +62,9 @@ class CustomerListener implements EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        return array(
+        return [
             TheliaEvents::CUSTOMER_LOGOUT => array("customerLogout", 128),
             TheliaEvents::CUSTOMER_LOGIN => array("customerLogin", 64)
-        );
+        ];
     }
 }

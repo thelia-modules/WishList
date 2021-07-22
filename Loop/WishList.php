@@ -90,17 +90,17 @@ class WishList extends BaseLoop implements ArraySearchLoopInterface
         if ($customerId != null) {
             $wishList = WishListQuery::create()->filterByCustomerId($customerId, Criteria::IN);
 
-            $wishArray = array();
+            $wishArray = [];
             foreach ($wishList as $data) {
                 $wishArray[] = $data->getProductId();
             }
 
-            if ($session = $this->request->getSession()->get(WishListController::SESSION_NAME)) {
+            if ($session = $this->requestStack->getCurrentRequest()->getSession()->get(WishListController::SESSION_NAME)) {
                 $search = array_unique(array_merge($wishArray, $session));
             }
 
         } else {
-            $search = $this->request->getSession()->get(WishListController::SESSION_NAME);
+            $search = $this->requestStack->getCurrentRequest()->getSession()->get(WishListController::SESSION_NAME);
         }
 
         return $search;

@@ -24,6 +24,7 @@
 namespace WishList;
 
 use Propel\Runtime\Connection\ConnectionInterface;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator;
 use Thelia\Install\Database;
 use Thelia\Module\BaseModule;
 
@@ -34,10 +35,19 @@ class WishList extends BaseModule
      * Like install and destroy
      */
 
-    public function postActivation(ConnectionInterface $con = null)
+    public function postActivation(ConnectionInterface $con = null) : void
     {
-        $database = new Database($con->getWrappedConnection());
-        $database->insertSql(null, array(THELIA_ROOT . '/local/modules/WishList/Config/thelia.sql'));
+        $database = new Database($con);
+        $database->insertSql(null,  [__DIR__.'/Config/thelia.sql']);
     }
-
+    /**
+     * Defines how services are loaded in your modules.
+     */
+    public static function configureServices(ServicesConfigurator $servicesConfigurator): void
+    {
+        $servicesConfigurator->load(self::getModuleCode().'\\', __DIR__)
+            ->exclude([THELIA_MODULE_DIR.ucfirst(self::getModuleCode()).'/I18n/*'])
+            ->autowire(true)
+            ->autoconfigure(true);
+    }
 }
