@@ -22,6 +22,7 @@
 /*************************************************************************************/
 namespace WishList\Controller\Front;
 
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Thelia\Controller\Front\BaseFrontController;
 use WishList\Event\WishListEvents;
 use WishList\Model\WishListQuery;
@@ -43,7 +44,7 @@ class WishListController extends BaseFrontController
      * Add a product to wishlist
      * @param $productId
      */
-    public function addProduct($productId, $json)
+    public function addProduct($productId, $json, EventDispatcherInterface $eventdispatcher)
     {
         $status = 'NOTLOGGED';
         $session = $this->getSession()->get(self::SESSION_NAME);
@@ -63,7 +64,7 @@ class WishListController extends BaseFrontController
 
             // Create array of product realy in wishlist
             $wish = WishListQuery::create()->findByCustomerId($customerId);
-            $wishArray = array();
+            $wishArray = [];
             foreach ($wish as $data) {
                 $wishArray[] = $data->getProductId();
             }
@@ -74,7 +75,7 @@ class WishListController extends BaseFrontController
 
                 // Add product to wishlist
                 $event = $this->createEventInstance($data);
-                $this->dispatch(WishListEvents::WISHLIST_ADD_PRODUCT, $event);
+                $eventdispatcher->dispatch($event, WishListEvents::WISHLIST_ADD_PRODUCT);
 
                 // Merge session & database wishlist
                 $session = array_unique(array_merge($wishArray, $session));
@@ -90,7 +91,7 @@ class WishListController extends BaseFrontController
         if ($json == 1) {
             return new JsonResponse($status);
         }
-        return $this->generateRedirect($this->getSession()->getReturnToUrl(), 301);
+        return $this->generateRedirect($this->getSession()->getReturnToUrl(), 302);
 
     }
 
@@ -99,9 +100,8 @@ class WishListController extends BaseFrontController
      * @param $productId
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function removeProduct($productId)
+    public function removeProduct($productId, EventDispatcherInterface $eventdispatcher)
     {
-
         $session = $this->getSession()->get(self::SESSION_NAME);
 
         // If session isn't empty and product is in session
@@ -127,19 +127,19 @@ class WishListController extends BaseFrontController
                 $event = $this->createEventInstance($data);
                 $event->setWishList($wishList->getId());
 
-                $this->dispatch(WishListEvents::WISHLIST_REMOVE_PRODUCT, $event);
+                $eventdispatcher->dispatch($event, WishListEvents::WISHLIST_REMOVE_PRODUCT);
             }
         }
 
-        return $this->generateRedirect($this->getSession()->getReturnToUrl(), 301);
+        return $this->generateRedirect($this->getSession()->getReturnToUrl(), 302);
 
     }
 
     /**
-     * Clear wishlist completly
+     * Clear wishlist completely
      * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function clear()
+    public function clear(EventDispatcherInterface $eventdispatcher)
     {
         // Clear session of wishlist
         $this->getSession()->remove(self::SESSION_NAME);
@@ -156,11 +156,11 @@ class WishListController extends BaseFrontController
                 $event = $this->createEventInstance($data);
                 $event->setUserId($customerId);
 
-                $this->dispatch(WishListEvents::WISHLIST_CLEAR, $event);
+                $eventdispatcher->dispatch($event, WishListEvents::WISHLIST_ADD_PRODUCT);
             }
         }
 
-        return $this->generateRedirect($this->getSession()->getReturnToUrl(), 301);
+        return $this->generateRedirect($this->getSession()->getReturnToUrl(), 302);
     }
 
     /**

@@ -28,20 +28,12 @@ The argument ```PRODUCT_ID``` corresponds to the product id to add or remove fro
 Tow Smarty functions are availables :
 
 - to verify if a product is already in wish list : __{in_wishlist product_id="PRODUCT_ID"}__
-- to verify if a product is realy in database wish list : __{is_saved_in_wishlist product_id="PRODUCT_ID"}__
 
 ```html
 {* $ID = product ID *}
 
 {if {in_wishlist product_id="$ID"}}
     <a href="{url path="/wishlist/remove/$ID"}">{intl l="Remove from wish list"}</a>
-    
-    {loop type="auth" name="customer_info_block" role="CUSTOMER"}
-        {if !{is_saved_in_wishlist product_id="$ID"}}
-            <p>This product is not really in your wish list. To really add, click the button below.</p>
-            <a class="btn btn-default" href="{url path="/wishlist/add/$ID"}">{intl l="Add to wish list"}</a>
-        {/if}
-    {/loop}
 {else}
     <a href="{url path="/wishlist/add/$ID"}">{intl l="Add to wish list"}</a>
 {/if}
