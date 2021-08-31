@@ -22,159 +22,43 @@
 /*************************************************************************************/
 namespace WishList\Controller\Front;
 
-use Psr\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\Request;
 use Thelia\Controller\Front\BaseFrontController;
-use WishList\Event\WishListEvents;
-use WishList\Model\WishListQuery;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use WishList\Service\WishListService;
 
 /**
- *
- * WishList management controller
- *
- * @author Michaël Espeche <mespeche@openstudio.fr>
+ * @Route("/wishlist", name="wishlist_")
  */
-
 class WishListController extends BaseFrontController
 {
-
-    const SESSION_NAME = 'WishList';
-
     /**
-     * Add a product to wishlist
-     * @param $productId
+     * @Route("/add/{productId}", name="add", methods="POST")
      */
-    public function addProduct($productId, $json, EventDispatcherInterface $eventdispatcher)
+    public function addProduct($productId, Request $request, WishListService $wishListService)
     {
-        $status = 'NOTLOGGED';
-        $session = $this->getSession()->get(self::SESSION_NAME);
+        $wishListService->addProduct($productId);
 
-        if ($session == null) {
-            $session = array();
-        }
-
-        // Save product into session
-        if (!in_array($productId, $session)) {
-            $session[] = $productId;
-        }
-
-        // If a customer is logged in
-        if ($customer = $this->getSecurityContext()->getCustomerUser()) {
-            $customerId = $customer->getId();
-
-            // Create array of product realy in wishlist
-            $wish = WishListQuery::create()->findByCustomerId($customerId);
-            $wishArray = [];
-            foreach ($wish as $data) {
-                $wishArray[] = $data->getProductId();
-            }
-
-            // If customer hasn't product in his wishlist
-            if (null === WishListQuery::getExistingObject($customerId, $productId)) {
-                $data = array('product_id' => $productId, 'user_id' => $customerId);
-
-                // Add product to wishlist
-                $event = $this->createEventInstance($data);
-                $eventdispatcher->dispatch($event, WishListEvents::WISHLIST_ADD_PRODUCT);
-
-                // Merge session & database wishlist
-                $session = array_unique(array_merge($wishArray, $session));
-                $status = 'ADD';
-            } else {
-                $status = 'DUPLICATE';
-            }
-
-        }
-
-        $this->getSession()->set(self::SESSION_NAME, $session);
-
-        if ($json == 1) {
-            return new JsonResponse($status);
-        }
-        return $this->generateRedirect($this->getSession()->getReturnToUrl(), 302);
-
+        return $this->generateRedirect($request->getSession()->getReturnToUrl());
     }
 
     /**
-     * Remove a product from wishlist
-     * @param $productId
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @Route("/remove/{productId}", name="remove", methods="POST")
      */
-    public function removeProduct($productId, EventDispatcherInterface $eventdispatcher)
+    public function removeProduct($productId, Request $request, WishListService $wishListService)
     {
-        $session = $this->getSession()->get(self::SESSION_NAME);
+        $wishListService->removeProduct($productId);
 
-        // If session isn't empty and product is in session
-        if (!empty($session) && in_array($productId, $session)) {
-            // Remove product from session
-            $key = array_search($productId, $session);
-            unset($session[$key]);
-
-            // Set new session values
-            $this->getSession()->set(self::SESSION_NAME, $session);
-        }
-
-        // If a customer is logged in
-        if ($customer = $this->getSecurityContext()->getCustomerUser()) {
-            $customerId = $customer->getId();
-
-            // If customer has product in his wishlist
-            if (null !== $wishList = WishListQuery::getExistingObject($customerId, $productId)) {
-
-                $data = array('product_id' => $productId, 'user_id' => $customerId);
-
-                // Remove product from wishlist
-                $event = $this->createEventInstance($data);
-                $event->setWishList($wishList->getId());
-
-                $eventdispatcher->dispatch($event, WishListEvents::WISHLIST_REMOVE_PRODUCT);
-            }
-        }
-
-        return $this->generateRedirect($this->getSession()->getReturnToUrl(), 302);
-
+        return $this->generateRedirect($request->getSession()->getReturnToUrl());
     }
 
     /**
-     * Clear wishlist completely
-     * @return \Symfony\Component\HttpFoundation\Response
+     * @Route("/clear", name="clear", methods="POST")
      */
-    public function clear(EventDispatcherInterface $eventdispatcher)
+    public function clear(Request $request, WishListService $wishListService)
     {
-        // Clear session of wishlist
-        $this->getSession()->remove(self::SESSION_NAME);
+        $wishListService->clearWishList();
 
-        // If customer is logged in
-        if ($customer = $this->getSecurityContext()->getCustomerUser()) {
-            $customerId = $customer->getId();
-
-            // If the customer has a wishlist
-            if (null !== $wishList = WishListQuery::create()->findOneByCustomerId($customerId)) {
-                $data = array('product_id' => null, 'user_id' => $customerId);
-
-                // Clear his wishlist
-                $event = $this->createEventInstance($data);
-                $event->setUserId($customerId);
-
-                $eventdispatcher->dispatch($event, WishListEvents::WISHLIST_ADD_PRODUCT);
-            }
-        }
-
-        return $this->generateRedirect($this->getSession()->getReturnToUrl(), 302);
+        return $this->generateRedirect($request->getSession()->getReturnToUrl());
     }
-
-    /**
-     * @param $data
-     * @return \WishList\Event\WishListEvents
-     */
-    private function createEventInstance($data)
-    {
-
-        $wishListEvent = new WishListEvents(
-            $data['product_id'], $data['user_id']
-        );
-
-        return $wishListEvent;
-    }
-
 }

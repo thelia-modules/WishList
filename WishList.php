@@ -30,6 +30,8 @@ use Thelia\Module\BaseModule;
 
 class WishList extends BaseModule
 {
+    const WISHLIST_SESSION_KEY = "WishList";
+
     /**
      * YOU HAVE TO IMPLEMENT HERE ABSTRACT METHODD FROM BaseModule Class
      * Like install and destroy

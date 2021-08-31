@@ -30,13 +30,10 @@ use WishList\Service\WishListService;
 
 class WishList extends AbstractSmartyPlugin
 {
-
-    protected $requestStack = null;
     protected $wishListService = null;
 
     public function __construct(RequestStack $requestStack, WishListService $wishListService)
     {
-        $this->requestStack = $requestStack;
         $this->wishListService = $wishListService;
     }
 
@@ -46,10 +43,7 @@ class WishList extends AbstractSmartyPlugin
      */
     public function inWishList($params) : bool
     {
-        $request = $this->requestStack->getCurrentRequest();
-        $session = $request->getSession()->get(\WishList\Controller\Front\WishListController::SESSION_NAME);
-
-        return $this->wishListService->check($request, $params, $session);
+        return $this->wishListService->inWishList($params['product_id']);
     }
 
     /**
@@ -59,7 +53,6 @@ class WishList extends AbstractSmartyPlugin
     {
         return [
             new SmartyPluginDescriptor("function", "in_wishlist", $this, "inWishList"),
-            new SmartyPluginDescriptor("function", "is_saved_in_wishlist", $this, "inSavedInWishList")
         ];
     }
 }
