@@ -29,7 +29,6 @@ use Thelia\Core\Template\Element\BaseLoop;
 use Thelia\Core\Template\Element\LoopResult;
 use Thelia\Core\Template\Element\LoopResultRow;
 use Thelia\Core\Template\Loop\Argument\ArgumentCollection;
-use WishList\Controller\Front\WishListController;
 use WishList\Model\Base\WishListQuery;
 
 /**
@@ -95,12 +94,12 @@ class WishList extends BaseLoop implements ArraySearchLoopInterface
                 $wishArray[] = $data->getProductId();
             }
 
-            if ($session = $this->requestStack->getCurrentRequest()->getSession()->get(WishListController::SESSION_NAME)) {
+            if ($session = $this->requestStack->getCurrentRequest()->getSession()->get(\WishList\WishList::WISHLIST_SESSION_KEY)) {
                 $search = array_unique(array_merge($wishArray, $session));
             }
 
         } else {
-            $search = $this->requestStack->getCurrentRequest()->getSession()->get(WishListController::SESSION_NAME);
+            $search = $this->requestStack->getCurrentRequest()->getSession()->get(\WishList\WishList::WISHLIST_SESSION_KEY);
         }
 
         return $search;

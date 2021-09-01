@@ -2,12 +2,10 @@
 
 namespace WishList\EventListener;
 
-use Symfony\Component\EventDispatcher\Event;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\SecurityContext;
-use WishList\Controller\Front\WishListController;
 use WishList\Model\WishList;
 use WishList\Model\WishListQuery;
 
@@ -30,17 +28,19 @@ class CustomerListener implements EventSubscriberInterface
 
     public function customerLogout() : void
     {
-        $this->requestStack->getCurrentRequest()->getSession()->set(WishListController::SESSION_NAME, []);
+        $this->requestStack->getCurrentRequest()->getSession()->remove(\WishList\WishList::WISHLIST_SESSION_KEY);
     }
 
+    // On login merge session and DB wishlists then erase useless session wishlist
     public function customerLogin() : void
     {
-        if ($this->securityContext->hasCustomerUser()) {
+        $customer = $this->securityContext->getCustomerUser();
+        if ($customer) {
+            $sessionWishList = $this->requestStack->getCurrentRequest()->getSession()->get(\WishList\WishList::WISHLIST_SESSION_KEY);
             $productIds = array_unique(
                 array_merge(
-                    is_array($this->requestStack->getCurrentRequest()->getSession()->get(WishListController::SESSION_NAME)) ?
-                        $this->requestStack->getCurrentRequest()->getSession()->get(WishListController::SESSION_NAME) : [],
-                    WishListQuery::create()->filterByCustomerId($this->securityContext->getCustomerUser()->getId())->select('product_id')->find()->toArray()
+                    is_array($sessionWishList)? $sessionWishList : [],
+                    WishListQuery::create()->filterByCustomerId($customer->getId())->select('product_id')->find()->toArray()
                 ), SORT_REGULAR
             );
 
@@ -56,7 +56,7 @@ class CustomerListener implements EventSubscriberInterface
                 }
             }
 
-            $this->requestStack->getCurrentRequest()->getSession()->set(WishListController::SESSION_NAME, $productIds);
+            $this->requestStack->getCurrentRequest()->getSession()->remove(\WishList\WishList::WISHLIST_SESSION_KEY);
         }
     }
 

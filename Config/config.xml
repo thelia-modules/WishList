@@ -4,11 +4,5 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://thelia.net/schema/dic/config http://thelia.net/schema/dic/config/thelia-1.0.xsd">
 
-    <loops>
-        <loop name="wishlist" class="WishList\Loop\WishList" />
-    </loops>
 
-  <services>
-    <service id="WishList\Service\WishListService"/>
-  </services>
 </config>
