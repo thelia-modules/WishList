@@ -4,13 +4,8 @@ This module allows you to create a wish list containing your favorite products.
 
 ## How to install
 
-This module must be into your ```modules/``` directory (thelia/local/modules/).
-
-You can download the .zip file of this module or create a git submodule into your project like this :
-
 ```
-cd /path-to-thelia
-git submodule add https://github.com/thelia-modules/WishList.git local/modules/WishList
+composer require thelia/wishlist-module dev-main
 ```
 
 Next, go to your Thelia admin panel for module activation.
