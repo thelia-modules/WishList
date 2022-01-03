@@ -96,7 +96,10 @@ class WishList extends BaseLoop implements ArraySearchLoopInterface
 
             if ($session = $this->requestStack->getCurrentRequest()->getSession()->get(\WishList\WishList::WISHLIST_SESSION_KEY)) {
                 $search = array_unique(array_merge($wishArray, $session));
+                return $search;
             }
+
+            return $wishArray;
 
         } else {
             $search = $this->requestStack->getCurrentRequest()->getSession()->get(\WishList\WishList::WISHLIST_SESSION_KEY);
@@ -112,7 +115,6 @@ class WishList extends BaseLoop implements ArraySearchLoopInterface
      */
     public function parseResults(LoopResult $loopResult)
     {
-
         $productIds = array();
 
         foreach ($loopResult->getResultDataCollection() as $wishlist) {
