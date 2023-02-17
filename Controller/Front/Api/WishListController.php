@@ -23,11 +23,18 @@
 namespace WishList\Controller\Front\Api;
 
 use OpenApi\Annotations as OA;
+use OpenApi\Model\Api\ModelFactory;
+use OpenApi\Service\OpenApiService;
 use Symfony\Component\Routing\Annotation\Route;
 
 use Symfony\Component\HttpFoundation\Request;
 use Thelia\Controller\Front\BaseFrontController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Thelia\Core\Security\SecurityContext;
+use Thelia\Model\ProductQuery;
+use TheliaSmarty\Template\Plugins\Security;
+use WishList\Model\WishList;
+use WishList\Model\WishListQuery;
 use WishList\Service\WishListService;
 
 /**
@@ -40,45 +47,110 @@ class WishListController extends BaseFrontController
      * @OA\Get(
      *     path="/wishlist",
      *     tags={"WishList"},
-     *     summary="Get the current wishlist",
+     *     summary="Get a wishlist",
+     *     @OA\Parameter(
+     *          name="wishListId",
+     *          in="query",
+     *          @OA\Schema(
+     *              type="integer"
+     *          )
+     *     ),
      *     @OA\Response(
      *          response="200",
      *          description="Success",
      *          @OA\JsonContent(
-     *                  type="array",
-     *                  @OA\Items(
-     *                      type="number"
-     *                  )
+     *             type="object",
+     *             @OA\Property(
+     *                property="wishList",
+     *                ref="#/components/schemas/WishList"
+     *             )
      *          )
      *     )
      * )
      */
-    public function getWishList(WishListService $wishListService)
+    public function getWishList(WishListService $wishListService, Request $request, ModelFactory $modelFactory)
     {
-        return new JsonResponse($wishListService->getWishList());
+        $wishListId = $request->get('wishListId');
+
+        return OpenApiService::jsonResponse($this->getOpenApiWishList($wishListId, $modelFactory, $wishListService));
     }
 
     /**
-     * @Route("/add/{productId}", name="add", methods="POST")
-     * @OA\Post(
-     *     path="/wishlist/add/{productId}",
+     * @Route("/all", name="list_all", methods="GET")
+     * @OA\Get(
+     *     path="/wishlist/all",
      *     tags={"WishList"},
-     *     summary="Add a product to wishlist",
-     *     @OA\Parameter(
-     *         in="path",
-     *         name="productId",
-     *         @OA\Schema(
-     *           type="integer"
+     *     summary="Get all wishlist of a customer",
+     *     @OA\Response(
+     *          response="200",
+     *          description="Success",
+     *          @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                  type="object",
+     *                  @OA\Property(
+     *                      property="wishList",
+     *                      ref="#/components/schemas/WishList"
+     *                  )
+     *              )
+     *          )
+     *     )
+     * )
+     */
+    public function getWishLists(WishListService $wishListService, ModelFactory $modelFactory)
+    {
+        $wishLists = $wishListService->getAllWishLists();
+
+        $openApiWishLists = [];
+        foreach ($wishLists as $wishList){
+            $openApiWishLists[] = $this->getOpenApiWishList($wishList->getId(), $modelFactory, $wishListService);
+        }
+
+        return OpenApiService::jsonResponse($openApiWishLists);
+    }
+
+    /**
+     * @Route("/create", name="create", methods="POST")
+     * @OA\Post(
+     *     path="/wishlist/create",
+     *     tags={"WishList"},
+     *     summary="Create a wishlist",
+     *     @OA\RequestBody(
+     *         @OA\MediaType(
+     *              mediaType="application/json",
+     *              @OA\Schema(
+     *                  type="object",
+     *                  @OA\Property(
+     *                      property="title",
+     *                      type="string"
+     *                  ),
+     *                  @OA\Property(
+     *                      property="productSaleElements",
+     *                      type="array",
+     *                      @OA\Items(
+     *                          type="object",
+     *                          @OA\Property(
+     *                              property="productSaleElementId",
+     *                              type="integer"
+     *                          ),
+     *                          @OA\Property(
+     *                              property="quantity",
+     *                              type="integer"
+     *                          )
+     *                      )
+     *                  )
+     *              )
      *         )
      *     ),
      *     @OA\Response(
      *          response="200",
      *          description="Success",
      *          @OA\JsonContent(
-     *                  type="array",
-     *                  @OA\Items(
-     *                      type="number"
-     *                  )
+     *             type="object",
+     *             @OA\Property(
+     *                property="wishList",
+     *                ref="#/components/schemas/WishList"
+     *             )
      *          )
      *     ),
      *     @OA\Response(
@@ -87,34 +159,51 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
-    public function addProduct($productId, Request $request, WishListService $wishListService)
+    public function createWishList(Request $request, WishListService $wishListService, ModelFactory $modelFactory)
     {
-        $status = $wishListService->addProduct($productId);
+        $data = json_decode($request->getContent(), true);
 
-        return new JsonResponse($wishListService->getWishList(), $status? 200:400);
+        $wishListTitle = array_key_exists('title', $data) ? $data['title'] : null;
+        $wishListProducts = array_key_exists('productSaleElements', $data) ? $data['productSaleElements'] : null;
+        $wishList = $wishListService->createUpdateWishList($wishListTitle, $wishListProducts);
+
+        return OpenApiService::jsonResponse($this->getOpenApiWishList($wishList->getId(), $modelFactory, $wishListService));
     }
 
     /**
-     * @Route("/remove/{productId}", name="remove", methods="POST")
+     * @Route("/duplicate/{wishListId}", name="duplicate", methods="POST")
      * @OA\Post(
-     *     path="/wishlist/remove/{productId}",
+     *     path="/wishlist/duplicate/{wishListId}",
      *     tags={"WishList"},
-     *     summary="Remove a product from wishlist",
+     *     summary="Duplicate a wishlist",
      *     @OA\Parameter(
      *         in="path",
-     *         name="productId",
+     *         name="wishListId",
      *         @OA\Schema(
      *           type="integer"
+     *         )
+     *      ),
+     *     @OA\RequestBody(
+     *         @OA\MediaType(
+     *              mediaType="application/json",
+     *              @OA\Schema(
+     *                  type="object",
+     *                  @OA\Property(
+     *                      property="title",
+     *                      type="string"
+     *                  )
+     *              )
      *         )
      *     ),
      *     @OA\Response(
      *          response="200",
      *          description="Success",
      *          @OA\JsonContent(
-     *                  type="array",
-     *                  @OA\Items(
-     *                      type="number"
-     *                  )
+     *             type="object",
+     *             @OA\Property(
+     *                property="wishList",
+     *                ref="#/components/schemas/WishList"
+     *             )
      *          )
      *     ),
      *     @OA\Response(
@@ -123,43 +212,254 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
-    public function removeProduct($productId, Request $request, WishListService $wishListService)
+    public function duplicateWishList($wishListId, Request $request, WishListService $wishListService, ModelFactory $modelFactory)
     {
-        $status = $wishListService->removeProduct($productId);
-        return new JsonResponse($wishListService->getWishList(), $status? 200:400);
+        $data = json_decode($request->getContent(), true);
+
+        $wishListTitle = array_key_exists('title', $data) ? $data['title'] : null;
+        $wishList = $wishListService->duplicateWishList($wishListId, $wishListTitle);
+
+        return OpenApiService::jsonResponse($this->getOpenApiWishList($wishList->getId(), $modelFactory, $wishListService));
     }
 
     /**
-     * @Route("/clear", name="clear", methods="POST")
+     * @Route("/update/{wishListId}", name="update", methods="POST")
      * @OA\Post(
-     *     path="/wishlist/clear",
+     *     path="/wishlist/update/{wishListId}",
      *     tags={"WishList"},
-     *     summary="Clear the wishlist",
+     *     summary="Update a wishlist",
+     *     @OA\Parameter(
+     *         in="path",
+     *         name="wishListId",
+     *         @OA\Schema(
+     *           type="integer"
+     *         )
+     *      ),
+     *     @OA\RequestBody(
+     *         @OA\MediaType(
+     *              mediaType="application/json",
+     *              @OA\Schema(
+     *                  type="object",
+     *                  @OA\Property(
+     *                      property="title",
+     *                      type="string"
+     *                  )
+     *              )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *          response="200",
+     *          description="Success",
+     *          @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                property="wishList",
+     *                ref="#/components/schemas/WishList"
+     *             )
+     *          )
+     *     ),
+     *     @OA\Response(
+     *          response="400",
+     *          description="Error"
+     *     )
+     * )
+     */
+    public function updateWishList($wishListId, Request $request, WishListService $wishListService, ModelFactory $modelFactory)
+    {
+        $data = json_decode($request->getContent(), true);
+
+        $wishListTitle = array_key_exists('title', $data) ? $data['title'] : null;
+        $wishList = $wishListService->createUpdateWishList($wishListTitle, null, $wishListId);
+
+        return OpenApiService::jsonResponse($this->getOpenApiWishList($wishList->getId(), $modelFactory, $wishListService));
+    }
+
+    /**
+     * @Route("/delete/{wishListId}", name="delete", methods="POST")
+     * @OA\Post(
+     *     path="/wishlist/delete/{wishListId}",
+     *     tags={"WishList"},
+     *     summary="delete a wishlist",
+     *     @OA\Parameter(
+     *         in="path",
+     *         name="wishListId",
+     *         @OA\Schema(
+     *           type="integer"
+     *         )
+     *      ),
      *     @OA\Response(
      *          response="200",
      *          description="Success"
+     *     ),
+     *     @OA\Response(
+     *          response="400",
+     *          description="Error"
      *     )
      * )
      */
-    public function clear(Request $request, WishListService $wishListService)
+    public function deleteWishList($wishListId, Request $request, WishListService $wishListService, ModelFactory $modelFactory)
     {
-        $wishListService->clearWishList();
+        $wishListService->deleteWishList($wishListId);
+
         return new JsonResponse();
     }
 
     /**
-     * @Route("/exist/{productId}", name="exist", methods="GET")
-     * @OA\Get(
-     *     path="/wishlist/exist/{productId}",
+     * @Route("/add/{productSaleElementId}/{wishListId}", name="add", methods="POST")
+     * @OA\Post(
+     *     path="/wishlist/add/{productSaleElementId}/{wishListId}",
      *     tags={"WishList"},
-     *     summary="Search if the product is in wishlist",
+     *     summary="Add a product to wishlist",
      *     @OA\Parameter(
      *         in="path",
-     *         name="productId",
+     *         name="productSaleElementId",
      *         @OA\Schema(
      *           type="integer"
      *         )
      *     ),
+     *     @OA\Parameter(
+     *         in="path",
+     *         name="wishListId",
+     *         @OA\Schema(
+     *           type="integer"
+     *         )
+     *      ),
+     *     @OA\RequestBody(
+     *         @OA\MediaType(
+     *              mediaType="application/json",
+     *              @OA\Schema(
+     *                  type="object",
+     *                  @OA\Property(
+     *                      property="quantity",
+     *                      type="integer"
+     *                  )
+     *              )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *          response="200",
+     *          description="Success",
+     *          @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                property="wishList",
+     *                ref="#/components/schemas/WishList"
+     *             )
+     *          )
+     *     ),
+     *     @OA\Response(
+     *          response="400",
+     *          description="Error"
+     *     )
+     * )
+     */
+    public function addProduct($productSaleElementId, $wishListId, Request $request, WishListService $wishListService, ModelFactory $modelFactory)
+    {
+        $data = json_decode($request->getContent(), true);
+
+        $quantity = array_key_exists('quantity', $data) ? $data['quantity'] : null;
+        $wishListService->addProduct($productSaleElementId, $quantity, $wishListId);
+
+        return OpenApiService::jsonResponse($this->getOpenApiWishList($wishListId, $modelFactory, $wishListService));
+    }
+
+    /**
+     * @Route("/remove/{productSaleElementId}/{wishListId}", name="remove", methods="POST")
+     * @OA\Post(
+     *     path="/wishlist/remove/{productSaleElementId}/{wishListId}",
+     *     tags={"WishList"},
+     *     summary="Remove a product from wishlist",
+     *     @OA\Parameter(
+     *         in="path",
+     *         name="productSaleElementId",
+     *         @OA\Schema(
+     *           type="integer"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         in="path",
+     *         name="wishListId",
+     *         @OA\Schema(
+     *           type="integer"
+     *         )
+     *      ),
+     *     @OA\Response(
+     *          response="200",
+     *          description="Success",
+     *          @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                property="wishList",
+     *                ref="#/components/schemas/WishList"
+     *             )
+     *          )
+     *     ),
+     *     @OA\Response(
+     *          response="400",
+     *          description="Error"
+     *     )
+     * )
+     */
+    public function removeProduct($productSaleElementId, $wishListId, WishListService $wishListService, ModelFactory $modelFactory)
+    {
+        $wishListService->removeProduct($productSaleElementId, $wishListId);
+
+        return OpenApiService::jsonResponse($this->getOpenApiWishList($wishListId, $modelFactory, $wishListService));
+    }
+
+    /**
+     * @Route("/clear/{wishListId}", name="clear", methods="POST")
+     * @OA\Post(
+     *     path="/wishlist/clear/{wishListId}",
+     *     tags={"WishList"},
+     *     summary="Clear the wishlist",
+     *     @OA\Parameter(
+     *         in="path",
+     *         name="wishListId",
+     *         @OA\Schema(
+     *           type="integer"
+     *         )
+     *      ),
+     *     @OA\Response(
+     *          response="200",
+     *          description="Success",
+     *          @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                property="wishList",
+     *                ref="#/components/schemas/WishList"
+     *             )
+     *          )
+     *     )
+     * )
+     */
+    public function clear($wishListId, WishListService $wishListService, ModelFactory $modelFactory)
+    {
+        $wishListService->clearWishList($wishListId);
+
+        return OpenApiService::jsonResponse($this->getOpenApiWishList($wishListId, $modelFactory, $wishListService));
+    }
+
+    /**
+     * @Route("/exist/{productSaleElementId}/{wishListId}", name="exist", methods="GET")
+     * @OA\Get(
+     *     path="/wishlist/exist/{productSaleElementId}/{wishListId}",
+     *     tags={"WishList"},
+     *     summary="Search if the product is in wishlist",
+     *     @OA\Parameter(
+     *         in="path",
+     *         name="productSaleElementId",
+     *         @OA\Schema(
+     *           type="integer"
+     *         )
+     *     ),
+     *     @OA\Parameter(
+     *         in="path",
+     *         name="wishListId",
+     *         @OA\Schema(
+     *           type="integer"
+     *         )
+     *      ),
      *     @OA\Response(
      *          response="200",
      *          description="Success",
@@ -169,8 +469,45 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
-    public function inWishList($productId, WishListService $wishListService)
+    public function inWishList($productSaleElementId, $wishListId, WishListService $wishListService)
     {
-        return new JsonResponse($wishListService->inWishList($productId));
+        return new JsonResponse($wishListService->inWishList($productSaleElementId, $wishListId));
+    }
+
+    /**
+     * @Route("/add-to-cart/{wishListId}", name="add_to_cart", methods="POST")
+     * @OA\Post(
+     *     path="/wishlist/add-to-cart/{wishListId}",
+     *     tags={"WishList"},
+     *     summary="Add wishlist to cart",
+     *     @OA\Parameter(
+     *         in="path",
+     *         name="wishListId",
+     *         @OA\Schema(
+     *           type="integer"
+     *         )
+     *      ),
+     *     @OA\Response(
+     *          response="200",
+     *          description="Success"
+     *     )
+     * )
+     */
+    public function addToCart($wishListId, WishListService $wishListService)
+    {
+        $wishListService->addWishListToCart($wishListId);
+
+        return new JsonResponse();
+    }
+
+    protected function getOpenApiWishList($wishListId, ModelFactory $modelFactory, WishListService $wishListService)
+    {
+        $wishList = $wishListService->getWishList($wishListId);
+
+        if (empty($wishList)){
+            return null;
+        }
+
+        return $modelFactory->buildModel('WishList', $wishList);
     }
 }

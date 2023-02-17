@@ -32,35 +32,28 @@ use Thelia\Core\Template\Element\PropelSearchLoopInterface;
 use Thelia\Core\Template\Loop\Argument\Argument;
 use Thelia\Core\Template\Loop\Argument\ArgumentCollection;
 use Thelia\Model\Lang;
+use WishList\Model\WishListProductQuery;
 use WishList\Model\WishListQuery;
 
 /**
  *
- * WishList loop
+ * WishListProduct loop
  *
  *
- * Class WishList
- * @package WishList\Loop
- * @author Michaël Espeche <mespeche@openstudio.fr>
+ * Class WishListProduct
+ * @package WishListProduct\Loop
  */
-class WishList extends BaseLoop implements PropelSearchLoopInterface
+class WishListProduct extends BaseLoop implements PropelSearchLoopInterface
 {
-    /**
-     * Definition of loop arguments
-     *
-     * @return \Thelia\Core\Template\Loop\Argument\ArgumentCollection
-     */
     protected function getArgDefinitions()
     {
         return new ArgumentCollection(
-            Argument::createIntListTypeArgument('id')
+            Argument::createIntListTypeArgument('id'),
+            Argument::createIntListTypeArgument('wish_list_id')
         );
     }
 
-    /**
-     * Return array of search results
-     * @return array|mixed|null
-     */
+
     public function buildModelCriteria()
     {
         $customer = $this->securityContext->getCustomerUser();
@@ -70,21 +63,31 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
             $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
         }
 
-        $wishList = WishListQuery::create();
+        $wishListProducts = WishListProductQuery::create();
 
         if (null !== $id = $this->getId()) {
-            $wishList->filterById($id);
+            $wishListProducts->filterById($id);
+        }
+
+        if (null !== $wishListId = $this->getWishListId()) {
+            $wishListProducts->filterByWishListId($wishListId);
         }
 
         if (null !== $customerId) {
-            $wishList->filterByCustomerId($customerId);
+            $wishListProducts
+                ->useWishListQuery()
+                ->filterByCustomerId($customerId)
+                ->endUse();
         }
 
         if (null !== $sessionId) {
-            $wishList->filterBySessionId($sessionId);
+            $wishListProducts
+                ->useWishListQuery()
+                ->filterBySessionId($sessionId)
+                ->endUse();
         }
 
-        return $wishList;
+        return $wishListProducts;
     }
 
     /**
@@ -94,22 +97,17 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
      */
     public function parseResults(LoopResult $loopResult)
     {
-        /** @var \WishList\Model\WishList $wishlist */
-        foreach ($loopResult->getResultDataCollection() as $wishlist){
+        /** @var \WishList\Model\WishListProduct $wishlistProduct */
+        foreach ($loopResult->getResultDataCollection() as $wishlistProduct){
 
-            $loopResultRow = new LoopResultRow($wishlist);
-
-            /** @var Lang $currentLang */
-            $currentLang = $this->requestStack->getCurrentRequest()->getSession()->get('thelia.current.lang');
+            $loopResultRow = new LoopResultRow($wishlistProduct);
 
             $loopResultRow
-                ->set("ID", $wishlist->getId())
-                ->set("TITLE", $wishlist->getTitle())
-                ->set("CUSTOMER_ID", $wishlist->getCustomerId())
-                ->set("SESSION_ID", $wishlist->getSessionId())
-                ->set("CREATED_AT", $wishlist->getCreatedAt())
-                ->set("UPDATED_AT", $wishlist->getUpdatedAt())
-                ->set("SHARED_URL", $wishlist->getUrl($currentLang->getLocale()))
+                ->set("ID", $wishlistProduct->getId())
+                ->set("WISH_LIST_ID", $wishlistProduct->getWishListId())
+                ->set("PRODUCT_SALE_ELEMENT_ID", $wishlistProduct->getProductSaleElementsId())
+                ->set("PRODUCT_ID", $wishlistProduct->getProductSaleElements()->getProductId())
+                ->set("QUANTITY", $wishlistProduct->getQuantity())
                 ;
 
             $loopResult->addRow($loopResultRow);

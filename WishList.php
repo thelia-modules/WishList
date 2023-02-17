@@ -27,10 +27,14 @@ use Propel\Runtime\Connection\ConnectionInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator;
 use Thelia\Install\Database;
 use Thelia\Module\BaseModule;
+use WishList\Model\WishListProduct;
+use WishList\Model\WishListProductQuery;
+use WishList\Model\WishListQuery;
 
 class WishList extends BaseModule
 {
     const WISHLIST_SESSION_KEY = "WishList";
+    const DOMAIN_NAME = "wishlist";
 
     /**
      * YOU HAVE TO IMPLEMENT HERE ABSTRACT METHODD FROM BaseModule Class
@@ -39,8 +43,14 @@ class WishList extends BaseModule
 
     public function postActivation(ConnectionInterface $con = null) : void
     {
-        $database = new Database($con);
-        $database->insertSql(null,  [__DIR__.'/Config/thelia.sql']);
+
+        try {
+            WishListQuery::create()->find();
+            WishListProductQuery::create()->find();
+        }catch (\Exception $e){
+            $database = new Database($con);
+            $database->insertSql(null,  [__DIR__.'/Config/TheliaMain.sql']);
+        }
     }
     /**
      * Defines how services are loaded in your modules.
