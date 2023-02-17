@@ -6,15 +6,26 @@
 
     <table name="wish_list" namespace="WishList\Model">
         <column autoIncrement="true" name="id" primaryKey="true" required="true" type="INTEGER" />
-        <column name="product_id" required="true" type="INTEGER" />
-        <column name="customer_id" required="true" type="INTEGER" />
-        <index name="idx_wish_list_product_id">
-            <index-column name="product_id" />
-        </index>
-        <index name="idx_wish_list_customer_id">
-            <index-column name="customer_id" />
-        </index>
+        <column name="title" required="false" type="VARCHAR" />
+        <column name="customer_id" required="false" type="INTEGER" />
+        <column name="session_id" required="false" type="VARCHAR" />
+        <foreign-key foreignTable="customer" name="fk_wish_list_customer_id" onDelete="CASCADE" onUpdate="RESTRICT">
+            <reference foreign="id" local="customer_id" />
+        </foreign-key>
         <behavior name="timestampable" />
+    </table>
+
+    <table name="wish_list_product" namespace="WishList\Model">
+        <column autoIncrement="true" name="id" primaryKey="true" required="true" type="INTEGER" />
+        <column name="wish_list_id" required="true" type="INTEGER" />
+        <column name="product_sale_elements_id" required="true" type="INTEGER" />
+        <column name="quantity" required="true" type="INTEGER" />
+        <foreign-key foreignTable="wish_list" name="fk_wish_list_product_wish_list_id" onDelete="CASCADE" onUpdate="RESTRICT">
+            <reference foreign="id" local="wish_list_id" />
+        </foreign-key>
+        <foreign-key foreignTable="product_sale_elements" name="fk_wish_list_product_sale_elements_id" onDelete="CASCADE" onUpdate="RESTRICT">
+            <reference foreign="id" local="product_sale_elements_id" />
+        </foreign-key>
     </table>
 
     <external-schema filename="local/config/schema.xml" referenceOnly="true" />
