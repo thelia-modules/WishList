@@ -2,10 +2,10 @@
 
 namespace WishList\Model;
 
-use WishList\Model\Base\WishListQuery as BaseWishListQuery;
+use WishList\Model\Base\WishListProduct as BaseWishListProduct;
 
 /**
- * Skeleton subclass for performing query and update operations on the 'wish_list' table.
+ * Skeleton subclass for representing a row from the 'wish_list_product' table.
  *
  *
  *
@@ -13,7 +13,7 @@ use WishList\Model\Base\WishListQuery as BaseWishListQuery;
  * application requirements.  This class will only be generated as
  * long as it does not already exist in the output directory.
  */
-class WishListQuery extends BaseWishListQuery
+class WishListProduct extends BaseWishListProduct
 {
 
-} // WishListQuery
+}

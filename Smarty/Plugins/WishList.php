@@ -43,7 +43,8 @@ class WishList extends AbstractSmartyPlugin
      */
     public function inWishList($params) : bool
     {
-        return $this->wishListService->inWishList($params['product_id']);
+        $wishListId = array_key_exists('wish_list_id', $params) ? $params['wish_list_id'] : null;
+        return $this->wishListService->inWishList($params['product_id'], $wishListId);
     }
 
     /**
