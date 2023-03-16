@@ -6,7 +6,10 @@ use OpenApi\Annotations as OA;
 use OpenApi\Model\Api\BaseApiModel;
 use OpenApi\Model\Api\ModelTrait\translatable;
 use OpenApi\Model\Api\ProductSaleElement;
+use Propel\Runtime\Exception\PropelException;
+use Thelia\Model\ProductImage;
 use Thelia\Model\ProductSaleElements;
+use Thelia\Model\ProductSaleElementsProductImage;
 
 
 /**
@@ -48,11 +51,22 @@ class WishListPse extends ProductSaleElement
         return $this;
     }
 
+    /**
+     * @param ProductSaleElements $theliaModel
+     * @param null $locale
+     * @throws PropelException
+     */
     public function createFromTheliaModel($theliaModel, $locale = null)
     {
         parent::createFromTheliaModel($theliaModel, $locale);
-
         $product = $theliaModel->getProduct()->setLocale($locale);
+
+        /** @var ProductSaleElementsProductImage $pseImage */
+        $pseImage = $theliaModel->getProductSaleElementsProductImages()->getFirst()?->getProductImage();
+
+        /** @var ProductImage $imageProduct */
+        $imageProduct = $product->getProductImages()->getFirst();
+        $image = $pseImage ?? $imageProduct;
 
         $this->setTitle($product->getTitle());
         $this->setDescription($product->getDescription());
@@ -61,6 +75,6 @@ class WishListPse extends ProductSaleElement
         $this->setMetaTitle($product->getMetaTitle());
         $this->setMetaDescription($product->getMetaDescription());
         $this->setMetaKeywords($product->getMetaKeywords());
+        $this->setImages([$this->modelFactory->buildModel('Image', $image)]);
     }
-
 }

@@ -24,6 +24,7 @@
 namespace WishList\Loop;
 
 use Propel\Runtime\ActiveQuery\Criteria;
+use Propel\Runtime\Exception\PropelException;
 use Thelia\Core\Template\Element\ArraySearchLoopInterface;
 use Thelia\Core\Template\Element\BaseLoop;
 use Thelia\Core\Template\Element\LoopResult;
@@ -94,6 +95,7 @@ class WishListProduct extends BaseLoop implements PropelSearchLoopInterface
      * @param LoopResult $loopResult
      *
      * @return LoopResult
+     * @throws PropelException
      */
     public function parseResults(LoopResult $loopResult)
     {

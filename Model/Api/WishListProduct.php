@@ -4,7 +4,9 @@ namespace WishList\Model\Api;
 
 use OpenApi\Annotations as OA;
 use OpenApi\Model\Api\BaseApiModel;
-
+use Propel\Runtime\Exception\PropelException;
+use Thelia\Model\ProductImage;
+use Thelia\Model\ProductSaleElements;
 
 /**
  * Class WishListProduct.
@@ -52,7 +54,13 @@ class WishListProduct extends BaseApiModel
      */
     protected $productSaleElement;
 
-    public function createFromTheliaModel($theliaModel, $locale = null)
+    /**
+     * @param \WishList\Model\WishListProduct $theliaModel
+     * @param $locale
+     * @return WishListProduct
+     * @throws PropelException
+     */
+    public function createFromTheliaModel($theliaModel, $locale = null): WishListProduct
     {
         $wishListProduct = parent::createFromTheliaModel($theliaModel, $locale);
 
@@ -71,9 +79,8 @@ class WishListProduct extends BaseApiModel
 
     /**
      * @param int $id
-     * @return WishList
      */
-    public function setId($id): WishListProduct
+    public function setId($id)
     {
         $this->id = $id;
         return $this;

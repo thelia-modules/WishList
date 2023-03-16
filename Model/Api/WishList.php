@@ -4,6 +4,8 @@ namespace WishList\Model\Api;
 
 use OpenApi\Annotations as OA;
 use OpenApi\Model\Api\BaseApiModel;
+use OpenApi\Model\Api\Product;
+use Propel\Runtime\Exception\PropelException;
 
 
 /**
@@ -48,6 +50,14 @@ class WishList extends BaseApiModel
      *    type="string",
      * )
      */
+    protected $image;
+
+    /**
+     * @var string
+     * @OA\Property(
+     *    type="string",
+     * )
+     */
     protected $title;
 
     /**
@@ -68,12 +78,16 @@ class WishList extends BaseApiModel
      * )
      * @Constraint\NotBlank(groups={"create", "update"})
      */
-    protected $products;
+    protected array $products;
 
-    /** @var \WishList\Model\WishList $theliaModel */
+    /** @throws PropelException
+     * @var \WishList\Model\WishList $theliaModel
+     */
     public function createFromTheliaModel($theliaModel, $locale = null): void
     {
         parent::createFromTheliaModel($theliaModel, $locale);
+
+       $this->id = $theliaModel->getId();
 
         $products = [];
         foreach ($theliaModel->getWishListProducts() as $wishListProduct) {
@@ -192,7 +206,16 @@ class WishList extends BaseApiModel
         return $this;
     }
 
+    public function getImage()
+    {
+        return $this->image;
+    }
 
-
-
+    /**
+     * @param $image
+     */
+    public function setImage($image): void
+    {
+        $this->image = $image;
+    }
 }
