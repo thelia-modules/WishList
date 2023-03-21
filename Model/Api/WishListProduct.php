@@ -4,6 +4,8 @@ namespace WishList\Model\Api;
 
 use OpenApi\Annotations as OA;
 use OpenApi\Model\Api\BaseApiModel;
+use Thelia\Model\ProductImage;
+use Thelia\Model\ProductSaleElements;
 
 
 /**
@@ -23,6 +25,17 @@ class WishListProduct extends BaseApiModel
      * @Constraint\NotBlank(groups={"read", "update"})
      */
     protected $id;
+
+    /**
+     * @var array
+     * @OA\Property(
+     *    type="array",
+     *     @OA\Items(
+     *          ref="#/components/schemas/File"
+     *     )
+     * )
+     */
+    protected $images;
 
     /**
      * @var integer
@@ -56,7 +69,19 @@ class WishListProduct extends BaseApiModel
     {
         $wishListProduct = parent::createFromTheliaModel($theliaModel, $locale);
 
-        $wishListProduct->setProductSaleElement($this->modelFactory->buildModel('WishListPse', $theliaModel->getProductSaleElements()));
+        /** @var ProductSaleElements $pse */
+        $pse = $theliaModel->getProductSaleElements();
+
+        $wishListProduct->setProductSaleElement($this->modelFactory->buildModel('WishListPse', $pse));
+
+        $images = array_map(
+            function (ProductImage $productImages) {
+                return $this->modelFactory->buildModel('Image', $productImages);
+            },
+            iterator_to_array($pse->getProduct()->getProductImages())
+        );
+
+        $wishListProduct->setImages($images);
 
         return $wishListProduct;
     }
@@ -133,4 +158,20 @@ class WishListProduct extends BaseApiModel
         return $this;
     }
 
+    /**
+     * @return array
+     */
+    public function getImages(): array
+    {
+        return $this->images;
+    }
+
+    /**
+     * @param array $images
+     */
+    public function setImages(array $images): WishListProduct
+    {
+        $this->images = $images;
+        return $this;
+    }
 }
