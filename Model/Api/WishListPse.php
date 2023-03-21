@@ -61,6 +61,8 @@ class WishListPse extends ProductSaleElement
         $this->setMetaTitle($product->getMetaTitle());
         $this->setMetaDescription($product->getMetaDescription());
         $this->setMetaKeywords($product->getMetaKeywords());
+        $images=$theliaModel->getProductSaleElementsProductImages();
+        $this->setImages(!empty($images) ? $images : $product->getProductImages());
     }
 
 }
