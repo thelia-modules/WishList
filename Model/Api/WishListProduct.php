@@ -38,6 +38,14 @@ class WishListProduct extends BaseApiModel
     protected $images;
 
     /**
+     * @var string
+     * @OA\Property(
+     *     type="string",
+     * )
+     */
+    protected $url;
+
+    /**
      * @var integer
      * @OA\Property(
      *    type="number",
@@ -82,6 +90,8 @@ class WishListProduct extends BaseApiModel
         );
 
         $wishListProduct->setImages($images);
+
+        $wishListProduct->setUrl($theliaModel->getUrl());
 
         return $wishListProduct;
     }
@@ -172,6 +182,24 @@ class WishListProduct extends BaseApiModel
     public function setImages(array $images): WishListProduct
     {
         $this->images = $images;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUrl(): string
+    {
+        return $this->url;
+    }
+
+    /**
+     * @param string $url
+     */
+    public function setUrl(string $url): WishListProduct
+    {
+        $this->url = $url;
+
         return $this;
     }
 }
