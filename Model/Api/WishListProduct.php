@@ -91,7 +91,7 @@ class WishListProduct extends BaseApiModel
 
         $wishListProduct->setImages($images);
 
-        $wishListProduct->setUrl($theliaModel->getUrl());
+        $wishListProduct->setUrl($pse->getProduct()->getUrl());
 
         return $wishListProduct;
     }
