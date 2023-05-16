@@ -56,6 +56,14 @@ class WishList extends BaseApiModel
      *    type="string",
      * )
      */
+    protected $code;
+
+    /**
+     * @var string
+     * @OA\Property(
+     *    type="string",
+     * )
+     */
     protected $sharedUrl;
 
     /**
@@ -139,6 +147,24 @@ class WishList extends BaseApiModel
     }
 
     /**
+     * @return string
+     */
+    public function getCode()
+    {
+        return $this->code;
+    }
+
+    /**
+     * @param string $title
+     * @return WishList
+     */
+    public function setCode($code): WishList
+    {
+        $this->code = $code;
+        return $this;
+    }
+
+    /**
      * @return array
      */
     public function getProducts()
@@ -191,8 +217,4 @@ class WishList extends BaseApiModel
         $this->sessionId = $sessionId;
         return $this;
     }
-
-
-
-
 }
