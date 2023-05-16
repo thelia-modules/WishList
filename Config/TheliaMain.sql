@@ -13,6 +13,7 @@ CREATE TABLE `wish_list`
 (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `title` VARCHAR(255),
+    `code` VARCHAR(255),
     `customer_id` INTEGER,
     `session_id` VARCHAR(255),
     `created_at` DATETIME,

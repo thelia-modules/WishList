@@ -25,6 +25,7 @@ namespace WishList\Controller\Front\Api;
 use OpenApi\Annotations as OA;
 use OpenApi\Model\Api\ModelFactory;
 use OpenApi\Service\OpenApiService;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 use Symfony\Component\HttpFoundation\Request;
@@ -73,6 +74,43 @@ class WishListController extends BaseFrontController
         $wishListId = $request->get('wishListId');
 
         return OpenApiService::jsonResponse($this->getOpenApiWishList($wishListId, $modelFactory, $wishListService));
+    }
+
+    /**
+     * @Route("/code/{code}", name="get_by_code", methods="GET")
+     * @OA\Get(
+     *     path="/wishlist/code/{code}",
+     *     tags={"WishList"},
+     *     summary="Get a wishlist by code",
+     *     @OA\Parameter(
+     *          name="code",
+     *          in="path",
+     *          @OA\Schema(
+     *              type="string"
+     *          )
+     *     ),
+     *     @OA\Response(
+     *          response="200",
+     *          description="Success",
+     *          @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                property="wishList",
+     *                ref="#/components/schemas/WishList"
+     *             )
+     *          )
+     *     )
+     * )
+     */
+    public function getWishListByCode(string $code, ModelFactory $modelFactory)
+    {
+        $wishList = WishListQuery::create()->filterByCode($code)->findOne();
+
+        if (null === $wishList){
+            return new JsonResponse([],Response::HTTP_NOT_FOUND);
+        }
+
+        return OpenApiService::jsonResponse($modelFactory->buildModel('WishList', $wishList));
     }
 
     /**

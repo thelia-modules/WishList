@@ -108,7 +108,7 @@ class WishListService
     public function getWishList($wishListId)
     {
         $customer = $this->securityContext->getCustomerUser();
-        $customerId = null !== $customer ? $customer->getId() : null;
+        $customerId = $customer?->getId();
         $sessionId = null;
         if (!$customer) {
             $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
@@ -192,8 +192,10 @@ class WishListService
             if (null !== $sessionId) {
                 $wishList->setSessionId($sessionId);
             }
+            $hash = bin2hex(random_bytes(20));
 
-            $rewrittenUrl = bin2hex(random_bytes(20));
+            $wishList->setCode($hash);
+            $rewrittenUrl = $hash;
         }
 
         if (null !== $title) {

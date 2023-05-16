@@ -105,6 +105,7 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
             $loopResultRow
                 ->set("ID", $wishlist->getId())
                 ->set("TITLE", $wishlist->getTitle())
+                ->set("CODE", $wishlist->getCode())
                 ->set("CUSTOMER_ID", $wishlist->getCustomerId())
                 ->set("SESSION_ID", $wishlist->getSessionId())
                 ->set("CREATED_AT", $wishlist->getCreatedAt())
