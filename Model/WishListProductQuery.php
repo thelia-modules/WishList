@@ -43,7 +43,6 @@ class WishListProductQuery extends BaseWishListProductQuery
                 ->endUse();
         }
 
-        $q = $query->findOne();
-        return $q;
+        return $query->findOne();
     }
 }
