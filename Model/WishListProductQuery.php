@@ -21,25 +21,29 @@ class WishListProductQuery extends BaseWishListProductQuery
     public static function getExistingObject($wishListId, $customerId, $sessionId, $pseId)
     {
         $query =  self::create()
-            ->filterByProductSaleElementsId($pseId)
-            ->useWishListQuery()
+            ->filterByProductSaleElementsId($pseId);
+
+        if (null !== $wishListId) {
+            $query->useWishListQuery()
                 ->filterById($wishListId)
-            ->endUse();
+                ->endUse();
+        }
 
         if (null !== $customerId) {
             $query
                 ->useWishListQuery()
-                    ->filterByCustomerId($customerId)
+                ->filterByCustomerId($customerId)
                 ->endUse();
         }
 
         if (null !== $sessionId) {
             $query
                 ->useWishListQuery()
-                    ->filterBySessionId($sessionId)
+                ->filterBySessionId($sessionId)
                 ->endUse();
         }
 
-        return $query->findOne();
+        $q = $query->findOne();
+        return $q;
     }
 }

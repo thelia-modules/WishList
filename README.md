@@ -19,7 +19,7 @@ on `/open_api/doc` in the `WishList` section.
 
 Two Smarty functions are availables :
 
-- to verify if a product is already in wish list : __{in_wishlist product_id="PRODUCT_ID" wish_list_id="WHISH_LIST_ID"}__
+- to verify if a product/PSE is already in a wish list (a specific one, or one of the user's wislists) : `{in_wishlist pse_id=...|product_id=... [wish_list_id=...]}`
 
 ```html
 {* $ID = product ID *}

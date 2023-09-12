@@ -24,6 +24,7 @@
 namespace WishList\Smarty\Plugins;
 
 use Symfony\Component\HttpFoundation\RequestStack;
+use Thelia\Model\ProductQuery;
 use TheliaSmarty\Template\AbstractSmartyPlugin;
 use TheliaSmarty\Template\SmartyPluginDescriptor;
 use WishList\Service\WishListService;
@@ -43,8 +44,21 @@ class WishList extends AbstractSmartyPlugin
      */
     public function inWishList($params) : bool
     {
-        $wishListId = array_key_exists('wish_list_id', $params) ? $params['wish_list_id'] : null;
-        return $this->wishListService->inWishList($params['product_id'], $wishListId);
+        $wishListId = $params['wish_list_id'] ?? null;
+
+        if (empty($params['pse_id'])) {
+            if (empty($params['product_id'])) {
+                return false;
+            }
+
+            $params['pse_id'] = ProductQuery::create()->findPk($params['product_id'])?->getDefaultSaleElements()->getId();
+        }
+
+        if (empty($params['pse_id'])) {
+            return false;
+        }
+
+        return $this->wishListService->inWishList($params['pse_id'], $wishListId);
     }
 
     /**
