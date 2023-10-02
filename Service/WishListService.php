@@ -249,15 +249,19 @@ class WishListService
 
         $wishList = $this->getWishListObject($wishListId, $customerId, $sessionId);
 
+        $code = bin2hex(random_bytes(20));
+
         $newWishList = (new WishList())
             ->setTitle($title)
             ->setCustomerId($customerId)
-            ->setSessionId($sessionId);
+            ->setSessionId($sessionId)
+            ->setCode($code)
+        ;
 
         $newWishList->save();
 
         $newWishList
-            ->setRewrittenUrl($currentLang->getLocale(), bin2hex(random_bytes(20)))
+            ->setRewrittenUrl($currentLang->getLocale(), $code)
             ->save();
 
         foreach ($wishList->getWishListProducts() as $wishListProduct) {
@@ -323,15 +327,19 @@ class WishListService
         /** @var Lang $currentLang */
         $currentLang = $this->requestStack->getCurrentRequest()->getSession()->get('thelia.current.lang');
 
+        $code = bin2hex(random_bytes(20));
+
         $newWishList = (new WishList())
             ->setTitle($wishList->getTitle())
             ->setCustomerId($customerId)
-            ->setSessionId($sessionId);
+            ->setSessionId($sessionId)
+            ->setCode($code)
+        ;
 
         $newWishList->save();
 
         $newWishList
-            ->setRewrittenUrl($currentLang->getLocale(), bin2hex(random_bytes(20)))
+            ->setRewrittenUrl($currentLang->getLocale(), $code)
             ->save();
 
         foreach ($wishList->getWishListProducts() as $wishListProduct) {
