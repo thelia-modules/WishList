@@ -4,9 +4,10 @@ namespace WishList\Model\Api;
 
 use OpenApi\Annotations as OA;
 use OpenApi\Model\Api\BaseApiModel;
+use OpenApi\Model\Api\Image;
 use OpenApi\Model\Api\ModelTrait\translatable;
 use OpenApi\Model\Api\ProductSaleElement;
-use Thelia\Model\ProductSaleElements;
+use Thelia\Model\ProductSaleElementsProductImage;
 
 
 /**
@@ -63,6 +64,12 @@ class WishListPse extends ProductSaleElement
         $this->setMetaKeywords($product->getMetaKeywords());
 
         $images = $theliaModel->getProductSaleElementsProductImages();
-        $this->setImages($images->getData());
+        $images = array_map(
+            function (ProductSaleElementsProductImage $pseProductImage) {
+                return $this->modelFactory->buildModel('Image', $pseProductImage->getProductImage());
+            },
+            iterator_to_array($images)
+        );
+        $this->setImages($images);
     }
 }
