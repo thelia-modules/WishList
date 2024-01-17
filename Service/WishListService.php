@@ -38,24 +38,18 @@ class WishListService
         $this->eventDispatcher = $eventDispatcher;
     }
 
-    public function addProduct($pseId, $quantity, $wishListId)
+    public function addProduct($pseId, $quantity, $wishListId = null)
     {
         try {
-            $customer = $this->securityContext->getCustomerUser();
-            $wishList = WishListQuery::create()->filterById($wishListId);
-            if (!$customer) {
-                $wishList->filterBySessionId($this->requestStack->getCurrentRequest()->getSession()->getId());
-            } else {
-                $wishList->filterByCustomerId($customer->getId());
-            }
+            $wishList = $this->findWishListOrCreateDefault($wishListId);
 
-            if (null === $wishList->findOne()) {
+            if (null === $wishList) {
                 throw new \Exception(Translator::getInstance()->trans('There is no wishlist with this id for this customer', [], WishListModule::DOMAIN_NAME));
             }
 
             $productWishList = WishListProductQuery::create()
                 ->filterByProductSaleElementsId($pseId)
-                ->filterByWishListId($wishListId)
+                ->filterByWishListId($wishList->getId())
                 ->findOneOrCreate();
 
             $productWishList
@@ -67,20 +61,22 @@ class WishListService
             return false;
         }
 
-        return true;
+        return $wishList->getId();
     }
 
-    public function removeProduct($pseId, $wishListId)
+    public function removeProduct($pseId, $wishListId = null)
     {
         try {
-            $customer = $this->securityContext->getCustomerUser();
-            $customerId = null !== $customer ? $customer->getId() : null;
-            $sessionId = null;
-            if (!$customer) {
-                $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
+
+            $wishList = $this->findWishListOrCreateDefault($wishListId);
+
+            if (null === $wishList) {
+                throw new \Exception(Translator::getInstance()->trans('There is no wishlist with this id for this customer', [], WishListModule::DOMAIN_NAME));
             }
 
-            $productWishList = WishListProductQuery::getExistingObject($wishListId, $customerId, $sessionId, $pseId);
+            list($customerId,$sessionId) = $this->getCurrentUserOrSession();
+
+            $productWishList = WishListProductQuery::getExistingObject($wishList->getId(), $customerId, $sessionId, $pseId);
 
             if ($productWishList) {
                 $productWishList->delete();
@@ -95,12 +91,7 @@ class WishListService
 
     public function inWishList($pseId, $wishListId): bool
     {
-        $customer = $this->securityContext->getCustomerUser();
-        $customerId = null !== $customer ? $customer->getId() : null;
-        $sessionId = null;
-        if (!$customer) {
-            $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
-        }
+        list($customerId,$sessionId) = $this->getCurrentUserOrSession();
 
         return null !== WishListProductQuery::getExistingObject($wishListId, $customerId, $sessionId, $pseId);
     }
@@ -119,12 +110,7 @@ class WishListService
 
     public function getAllWishLists()
     {
-        $customer = $this->securityContext->getCustomerUser();
-        $customerId = null !== $customer ? $customer->getId() : null;
-        $sessionId = null;
-        if (!$customer) {
-            $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
-        }
+        list($customerId,$sessionId) = $this->getCurrentUserOrSession();
 
         $wishList = WishListQuery::create();
 
@@ -141,12 +127,7 @@ class WishListService
 
     public function clearWishList($wishListId)
     {
-        $customer = $this->securityContext->getCustomerUser();
-        $customerId = null !== $customer ? $customer->getId() : null;
-        $sessionId = null;
-        if (!$customer) {
-            $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
-        }
+        list($customerId,$sessionId) = $this->getCurrentUserOrSession();
 
         $query =  WishListProductQuery::create()
             ->useWishListQuery()
@@ -172,19 +153,45 @@ class WishListService
         return true;
     }
 
-    public function createUpdateWishList($title, $products, $wishListId = null)
+    public function findWishListOrCreateDefault($wishListId = null)
     {
-        $customer = $this->securityContext->getCustomerUser();
-        $customerId = null !== $customer ? $customer->getId() : null;
-        $sessionId = null;
-        if (!$customer) {
-            $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
+        if ($wishListId) {
+            return $this->getWishList($wishListId);
         }
+        $defaultWishList = $this->findCurrentDefaultWishList();
+        if (null !== $defaultWishList) {
+            return $defaultWishList;
+        }
+        return $this->createUpdateWishList("Default");
+    }
+
+    public function setWishListToDefault($wishListId)
+    {
+        $newDefaultWishList = $this->getWishList($wishListId);
+        if (null === $newDefaultWishList) {
+            throw new \Exception(Translator::getInstance()->trans('There is no wishlist with this id for this customer', [], WishListModule::DOMAIN_NAME));
+        }
+
+        list($customerId,$sessionId) = $this->getCurrentUserOrSession();
+        $wishList = WishListQuery::create();
+        if (null !== $customerId) {
+            $wishList->filterByCustomerId($customerId);
+        }
+        if (null !== $sessionId) {
+            $wishList->filterBySessionId($sessionId);
+        }
+        $wishList->update(["Default" => 0]);
+
+        $newDefaultWishList->setDefault(1)->save();
+    }
+    public function createUpdateWishList($title, $products = null, $wishListId = null)
+    {
+        list($customerId,$sessionId) = $this->getCurrentUserOrSession();
 
         $rewrittenUrl = null;
         if (null === $wishList = $this->getWishListObject($wishListId, $customerId, $sessionId)) {
             $wishList = new WishList();
-
+            $defaultWishList = $this->findCurrentDefaultWishList();
             if (null !== $customerId) {
                 $wishList->setCustomerId($customerId);
             }
@@ -195,6 +202,9 @@ class WishListService
             $hash = bin2hex(random_bytes(20));
 
             $wishList->setCode($hash);
+            if (null === $defaultWishList) {
+                $wishList->setDefault(1);
+            }
             $rewrittenUrl = $hash;
         }
 
@@ -224,12 +234,7 @@ class WishListService
 
     public function deleteWishList($wishListId)
     {
-        $customer = $this->securityContext->getCustomerUser();
-        $customerId = null !== $customer ? $customer->getId() : null;
-        $sessionId = null;
-        if (!$customer) {
-            $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
-        }
+        list($customerId,$sessionId) = $this->getCurrentUserOrSession();
 
         if (null !== $wishList = $this->getWishListObject($wishListId, $customerId, $sessionId)) {
             $wishList->delete();
@@ -238,12 +243,7 @@ class WishListService
 
     public function duplicateWishList($wishListId, $title)
     {
-        $customer = $this->securityContext->getCustomerUser();
-        $customerId = null !== $customer ? $customer->getId() : null;
-        $sessionId = null;
-        if (!$customer) {
-            $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
-        }
+        list($customerId,$sessionId) = $this->getCurrentUserOrSession();
         /** @var Lang $currentLang */
         $currentLang = $this->requestStack->getCurrentRequest()->getSession()->get('thelia.current.lang');
 
@@ -286,12 +286,7 @@ class WishListService
 
     public function addWishListToCart($wishListId)
     {
-        $customer = $this->securityContext->getCustomerUser();
-        $customerId = null !== $customer ? $customer->getId() : null;
-        $sessionId = null;
-        if (!$customer) {
-            $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
-        }
+        list($customerId,$sessionId) = $this->getCurrentUserOrSession();
 
         $wishList = $this->getWishListObject($wishListId, $customerId, $sessionId);
 
@@ -315,12 +310,7 @@ class WishListService
 
     public function cloneWishList($wishListId)
     {
-        $customer = $this->securityContext->getCustomerUser();
-        $customerId = null !== $customer ? $customer->getId() : null;
-        $sessionId = null;
-        if (!$customer) {
-            $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
-        }
+        list($customerId,$sessionId) = $this->getCurrentUserOrSession();
 
         $wishList = WishListQuery::create()->findPk($wishListId);
 
@@ -363,5 +353,34 @@ class WishListService
         }
 
         return $wishList->findOne();
+    }
+
+    protected function findCurrentDefaultWishList()
+    {
+        list($customerId,$sessionId) = $this->getCurrentUserOrSession();
+
+        $wishList = WishListQuery::create()
+            ->filterByDefault(1);
+
+        if (null !== $customerId) {
+            $wishList->filterByCustomerId($customerId);
+        }
+
+        if (null !== $sessionId) {
+            $wishList->filterBySessionId($sessionId);
+        }
+
+        return $wishList->findOne();
+    }
+
+    protected function getCurrentUserOrSession()
+    {
+        $customer = $this->securityContext->getCustomerUser();
+        $customerId = null !== $customer ? $customer->getId() : null;
+        $sessionId = null;
+        if (!$customer) {
+            $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
+        }
+        return [$customerId,$sessionId];
     }
 }

@@ -343,9 +343,9 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/add/{productSaleElementId}/{wishListId}", name="add", methods="POST")
+     * @Route("/add/{productSaleElementId}", name="add", methods="POST")
      * @OA\Post(
-     *     path="/wishlist/add/{productSaleElementId}/{wishListId}",
+     *     path="/wishlist/add/{productSaleElementId}",
      *     tags={"WishList"},
      *     summary="Add a product to wishlist",
      *     @OA\Parameter(
@@ -355,13 +355,6 @@ class WishListController extends BaseFrontController
      *           type="integer"
      *         )
      *     ),
-     *     @OA\Parameter(
-     *         in="path",
-     *         name="wishListId",
-     *         @OA\Schema(
-     *           type="integer"
-     *         )
-     *      ),
      *     @OA\RequestBody(
      *         @OA\MediaType(
      *              mediaType="application/json",
@@ -369,6 +362,10 @@ class WishListController extends BaseFrontController
      *                  type="object",
      *                  @OA\Property(
      *                      property="quantity",
+     *                      type="integer"
+     *                  ),
+     *                  @OA\Property(
+     *                      property="wishListId",
      *                      type="integer"
      *                  )
      *              )
@@ -391,36 +388,36 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
-    public function addProduct($productSaleElementId, $wishListId, Request $request, WishListService $wishListService, ModelFactory $modelFactory)
+    public function addProduct($productSaleElementId, Request $request, WishListService $wishListService, ModelFactory $modelFactory)
     {
         $data = json_decode($request->getContent(), true);
 
+        $wishListId = array_key_exists('wishListId', $data) ? $data['wishListId'] : null;
         $quantity = array_key_exists('quantity', $data) ? $data['quantity'] : null;
+
+
         $wishListService->addProduct($productSaleElementId, $quantity, $wishListId);
 
         return OpenApiService::jsonResponse($this->getOpenApiWishList($wishListId, $modelFactory, $wishListService));
     }
-
     /**
-     * @Route("/remove/{productSaleElementId}/{wishListId}", name="remove", methods="POST")
+     * @Route("/set-default", name="set-default", methods="POST")
      * @OA\Post(
-     *     path="/wishlist/remove/{productSaleElementId}/{wishListId}",
+     *     path="/wishlist/set-default",
      *     tags={"WishList"},
-     *     summary="Remove a product from wishlist",
-     *     @OA\Parameter(
-     *         in="path",
-     *         name="productSaleElementId",
-     *         @OA\Schema(
-     *           type="integer"
+     *     summary="Set a default wishlist",
+     *     @OA\RequestBody(
+     *         @OA\MediaType(
+     *              mediaType="application/json",
+     *              @OA\Schema(
+     *                  type="object",
+     *                  @OA\Property(
+     *                      property="wishListId",
+     *                      type="integer"
+     *                  )
+     *              )
      *         )
      *     ),
-     *     @OA\Parameter(
-     *         in="path",
-     *         name="wishListId",
-     *         @OA\Schema(
-     *           type="integer"
-     *         )
-     *      ),
      *     @OA\Response(
      *          response="200",
      *          description="Success",
@@ -438,8 +435,64 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
-    public function removeProduct($productSaleElementId, $wishListId, WishListService $wishListService, ModelFactory $modelFactory)
+    public function setDefaultWishList(Request $request, WishListService $wishListService, ModelFactory $modelFactory)
     {
+        $data = json_decode($request->getContent(), true);
+        $wishListId = array_key_exists('wishListId', $data) ? $data['wishListId'] : null;
+
+        $wishListService->setWishListToDefault($wishListId);
+
+        return OpenApiService::jsonResponse($this->getOpenApiWishList($wishListId, $modelFactory, $wishListService));
+    }
+
+    /**
+     * @Route("/remove/{productSaleElementId}", name="remove", methods="POST")
+     * @OA\Post(
+     *     path="/wishlist/remove/{productSaleElementId}",
+     *     tags={"WishList"},
+     *     summary="Remove a product from wishlist",
+     *     @OA\Parameter(
+     *         in="path",
+     *         name="productSaleElementId",
+     *         @OA\Schema(
+     *           type="integer"
+     *         )
+     *     ),
+     *     @OA\RequestBody(
+     *         @OA\MediaType(
+     *              mediaType="application/json",
+     *              @OA\Schema(
+     *                  type="object",
+     *                  @OA\Property(
+     *                      property="wishListId",
+     *                      type="integer"
+     *                  )
+     *              )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *          response="200",
+     *          description="Success",
+     *          @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(
+     *                property="wishList",
+     *                ref="#/components/schemas/WishList"
+     *             )
+     *          )
+     *     ),
+     *     @OA\Response(
+     *          response="400",
+     *          description="Error"
+     *     )
+     * )
+     */
+    public function removeProduct($productSaleElementId, WishListService $wishListService, ModelFactory $modelFactory, Request $request)
+    {
+        $data = json_decode($request->getContent(), true);
+
+        $wishListId = array_key_exists('wishListId', $data) ? $data['wishListId'] : null;
+
         $wishListService->removeProduct($productSaleElementId, $wishListId);
 
         return OpenApiService::jsonResponse($this->getOpenApiWishList($wishListId, $modelFactory, $wishListService));

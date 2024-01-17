@@ -97,13 +97,14 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/add/{productId}/{wishListId}", name="add", methods="POST")
+     * @Route("/add/{productId}", name="add", methods="POST")
      */
-    public function addProduct($productId, $wishListId, Request $request, WishListService $wishListService, ParserContext $parserContext)
+    public function addProduct($productId, Request $request, WishListService $wishListService, ParserContext $parserContext)
     {
         $wishListForm = $this->createForm(AddWishListProductForm::getName());
         try {
             $form = $this->validateForm($wishListForm);
+            $wishListId = $form->get('wishListId')->getData() ?? null;
             $wishListService->addProduct($productId, $form->get('quantity')->getData(), $wishListId);
         }catch (\Exception $exception) {
             Tlog::getInstance()->error($exception->getMessage());

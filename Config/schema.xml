@@ -10,6 +10,7 @@
         <column name="code" required="false" type="VARCHAR" />
         <column name="customer_id" required="false" type="INTEGER" />
         <column name="session_id" required="false" type="VARCHAR" />
+        <column name="default" type="TINYINT" />
         <foreign-key foreignTable="customer" name="fk_wish_list_customer_id" onDelete="CASCADE" onUpdate="RESTRICT">
             <reference foreign="id" local="customer_id" />
         </foreign-key>

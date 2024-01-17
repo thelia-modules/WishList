@@ -10,6 +10,8 @@ class AddWishListProductForm extends BaseForm
 {
     protected function buildForm()
     {
-        $this->formBuilder->add('quantity', IntegerType::class);
+        $this->formBuilder
+            ->add('wishListId', IntegerType::class)
+            ->add('quantity', IntegerType::class);
     }
 }
