@@ -13,7 +13,7 @@
         <language>en_US</language>
         <language>fr_FR</language>
     </languages>
-    <version>2.1.0</version>
+    <version>2.1.1</version>
     <authors>
         <author>
             <name>Michaël Espeche</name>
@@ -22,6 +22,10 @@
         <author>
             <name>Gilles Bourgeat</name>
             <email>gbourgeat@openstudio.fr</email>
+        </author>
+        <author>
+            <name>Franck Allimant</name>
+            <email>fallimant@openstudio.fr</email>
         </author>
     </authors>
     <type>classic</type>
