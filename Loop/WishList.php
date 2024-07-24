@@ -23,8 +23,7 @@
 
 namespace WishList\Loop;
 
-use Propel\Runtime\ActiveQuery\Criteria;
-use Thelia\Core\Template\Element\ArraySearchLoopInterface;
+use Propel\Runtime\Exception\PropelException;
 use Thelia\Core\Template\Element\BaseLoop;
 use Thelia\Core\Template\Element\LoopResult;
 use Thelia\Core\Template\Element\LoopResultRow;
@@ -42,6 +41,8 @@ use WishList\Model\WishListQuery;
  * Class WishList
  * @package WishList\Loop
  * @author Michaël Espeche <mespeche@openstudio.fr>
+ * @method int|null getCustomerId()
+ * @method int|null getId()
  */
 class WishList extends BaseLoop implements PropelSearchLoopInterface
 {
@@ -53,21 +54,27 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
     protected function getArgDefinitions()
     {
         return new ArgumentCollection(
-            Argument::createIntListTypeArgument('id')
+            Argument::createIntListTypeArgument('id'),
+            Argument::createIntListTypeArgument('customer_id')
         );
     }
 
     /**
      * Return array of search results
-     * @return array|mixed|null
+     * @return WishListQuery
      */
     public function buildModelCriteria()
     {
-        $customer = $this->securityContext->getCustomerUser();
-        $customerId = null !== $customer ? $customer->getId() : null;
         $sessionId = null;
-        if (!$customer) {
-            $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
+
+        // In the back-office, we allow any customer.
+        if (! $this->getBackendContext() || null === $customerId = $this->getCustomerId()) {
+            $customer = $this->securityContext->getCustomerUser();
+            $customerId = $customer?->getId();
+
+            if (! $customer) {
+                $sessionId = $this->requestStack->getCurrentRequest()?->getSession()->getId();
+            }
         }
 
         $wishList = WishListQuery::create();
@@ -91,6 +98,7 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
      * @param LoopResult $loopResult
      *
      * @return LoopResult
+     * @throws PropelException
      */
     public function parseResults(LoopResult $loopResult)
     {
@@ -100,7 +108,7 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
             $loopResultRow = new LoopResultRow($wishlist);
 
             /** @var Lang $currentLang */
-            $currentLang = $this->requestStack->getCurrentRequest()->getSession()->get('thelia.current.lang');
+            $currentLocale = $this->requestStack->getCurrentRequest()?->getSession()->getLang()->getLocale();
 
             $loopResultRow
                 ->set("ID", $wishlist->getId())
@@ -110,8 +118,8 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
                 ->set("SESSION_ID", $wishlist->getSessionId())
                 ->set("CREATED_AT", $wishlist->getCreatedAt())
                 ->set("UPDATED_AT", $wishlist->getUpdatedAt())
-                ->set("SHARED_URL", $wishlist->getUrl($currentLang->getLocale()))
-                ;
+                ->set("SHARED_URL", $wishlist->getUrl($currentLocale))
+            ;
 
             $loopResult->addRow($loopResultRow);
         }

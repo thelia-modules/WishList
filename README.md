@@ -44,3 +44,6 @@ Here is an example of using the "wishlist" loop :
     {/loop}
 {/loop}
 ```
+
+The `customer_id` argument in `wishlist` loop is allowed only if `backend_context`
+is 1, otherwise the current user ID is considered.
