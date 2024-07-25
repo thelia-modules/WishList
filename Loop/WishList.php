@@ -68,7 +68,7 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
         $sessionId = null;
 
         // In the back-office, we allow any customer.
-        if (! $this->getBackendContext() || null === $customerId = $this->getCustomerId()) {
+        if (! $this->getBackendContext() || (null === $customerId = $this->getCustomerId())) {
             $customer = $this->securityContext->getCustomerUser();
             $customerId = $customer?->getId();
 
