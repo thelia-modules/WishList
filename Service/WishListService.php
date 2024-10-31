@@ -58,7 +58,7 @@ class WishListService
                 ->setQuantity($quantity)
                 ->save();
         } catch (\Exception $e) {
-            Tlog::getInstance()->error('Error during wishlist add :'.$e->getMessage());
+            Tlog::getInstance()->error('Error during wishlist add :' . $e->getMessage());
 
             return false;
         }
@@ -83,7 +83,7 @@ class WishListService
                 $productWishList->delete();
             }
         } catch (\Exception $e) {
-            Tlog::getInstance()->error('Error during wishlist remove :'.$e->getMessage());
+            Tlog::getInstance()->error('Error during wishlist remove :' . $e->getMessage());
 
             return false;
         }
@@ -218,6 +218,10 @@ class WishListService
             $rewrittenUrl = $hash;
         }
 
+        if (null !== $title) {
+            $wishList->setTitle($title);
+        }
+
         $wishList->save();
 
         if (null !== $rewrittenUrl) {
@@ -256,8 +260,7 @@ class WishListService
         $newWishList = (new WishList())
             ->setTitle($title)
             ->setCustomerId($customerId)
-            ->setSessionId($sessionId)
-        ;
+            ->setSessionId($sessionId);
 
         $code = $this->getWishList($newWishList);
 
@@ -326,8 +329,7 @@ class WishListService
         $newWishList = (new WishList())
             ->setTitle($wishList->getTitle())
             ->setCustomerId($customerId)
-            ->setSessionId($sessionId)
-        ;
+            ->setSessionId($sessionId);
 
         $code = $this->getWishList($newWishList);
 
@@ -346,7 +348,7 @@ class WishListService
         return $newWishList;
     }
 
-    protected function getWishListObject($wishListId, $customerId, $sessionId)
+    protected function getWishListObject($wishListId, $customerId, $sessionId): ?WishList
     {
         $wishList = WishListQuery::create()
             ->filterById($wishListId);
@@ -401,14 +403,16 @@ class WishListService
         $count = 0;
 
         while (true) {
-            if (WishListQuery::create()
-                    ->filterByCode($wishlistHash)
-                    ->filterById($wishlist->getId(), Criteria::NOT_EQUAL)
-                    ->count() === 0) {
+            if (
+                WishListQuery::create()
+                ->filterByCode($wishlistHash)
+                ->filterById($wishlist->getId(), Criteria::NOT_EQUAL)
+                ->count() === 0
+            ) {
                 break;
             }
 
-            $wishlistHash = Slugify::create()->slugify($wishlist->getTitle().'-'.++$count, '-');
+            $wishlistHash = Slugify::create()->slugify($wishlist->getTitle() . '-' . ++$count, '-');
         }
 
         return $wishlistHash;

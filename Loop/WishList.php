@@ -1,4 +1,5 @@
 <?php
+
 /*************************************************************************************/
 /*                                                                                   */
 /*      Thelia	                                                                     */
@@ -55,7 +56,9 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
     {
         return new ArgumentCollection(
             Argument::createIntListTypeArgument('id'),
-            Argument::createIntListTypeArgument('customer_id')
+            Argument::createIntListTypeArgument('customer_id'),
+            Argument::createAlphaNumStringTypeArgument('code'),
+            Argument::createBooleanTypeArgument('default'),
         );
     }
 
@@ -83,12 +86,20 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
             $wishList->filterById($id);
         }
 
+        if (null !== $code = $this->getCode()) {
+            $wishList->filterByCode($code);
+        }
+
         if (null !== $customerId) {
             $wishList->filterByCustomerId($customerId);
         }
 
         if (null !== $sessionId) {
             $wishList->filterBySessionId($sessionId);
+        }
+
+        if (null !== $default = $this->getDefault()) {
+            $wishList->filterByDefault($default);
         }
 
         return $wishList;
@@ -103,7 +114,7 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
     public function parseResults(LoopResult $loopResult)
     {
         /** @var \WishList\Model\WishList $wishlist */
-        foreach ($loopResult->getResultDataCollection() as $wishlist){
+        foreach ($loopResult->getResultDataCollection() as $wishlist) {
 
             $loopResultRow = new LoopResultRow($wishlist);
 
@@ -112,6 +123,7 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
 
             $loopResultRow
                 ->set("ID", $wishlist->getId())
+                ->set("DEFAULT", $wishlist->getDefault())
                 ->set("TITLE", $wishlist->getTitle())
                 ->set("CODE", $wishlist->getCode())
                 ->set("CUSTOMER_ID", $wishlist->getCustomerId())
