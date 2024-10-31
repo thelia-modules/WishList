@@ -25,6 +25,15 @@ class WishList extends BaseApiModel
     protected $id;
 
     /**
+     * @var boolean
+     * @OA\Property(
+     *    type="boolean",
+     * )
+     * @Constraint\NotBlank(groups={"read", "update"})
+     */
+    protected $default;
+
+    /**
      * @var integer
      * @OA\Property(
      *    type="number",
@@ -107,6 +116,24 @@ class WishList extends BaseApiModel
     public function setId($id): WishList
     {
         $this->id = $id;
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getDefault()
+    {
+        return $this->default;
+    }
+
+    /**
+     * @param boolean $default
+     * @return WishList
+     */
+    public function setDefault($default): WishList
+    {
+        $this->default = $default;
         return $this;
     }
 
