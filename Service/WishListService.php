@@ -223,7 +223,6 @@ class WishListService
         $wishList->save();
 
         $rewrittenUrl = $this->createWishListUrl($wishList);
-
         if (null !== $rewrittenUrl) {
             $currentLang = $this->requestStack->getCurrentRequest()?->getSession()->get('thelia.current.lang');
             $wishList
@@ -242,27 +241,9 @@ class WishListService
 
     public function createWishListUrl(Wishlist $wishlist)
     {
-        $wishListSlugBase = $wishlist->getTitle().$wishlist->getId();
-        // Create hash from liste title
-        $wishlistHash = Slugify::create()->slugify($wishListSlugBase, '-');
+        $wishListSlugBase = $wishlist->getTitle().'-'.$wishlist->getId();
 
-        // Manage collisions
-        $count = 0;
-
-        while (true) {
-            if (
-                WishListQuery::create()
-                    ->filterByCode($wishlistHash)
-                    ->filterById($wishlist->getId(), Criteria::NOT_EQUAL)
-                    ->count() === 0
-            ) {
-                break;
-            }
-
-            $wishlistHash = Slugify::create()->slugify($wishListSlugBase . '-' . ++$count, '-');
-        }
-
-        return $wishlistHash;
+        return Slugify::create()->slugify($wishListSlugBase, '-');
     }
 
     public function deleteWishList($wishListId): void
@@ -291,10 +272,12 @@ class WishListService
 
         $newWishList
             ->setCode($code)
+            ->save()
         ;
 
+        $rewrittenUrl = $this->createWishListUrl($newWishList);
         $newWishList
-            ->setRewrittenUrl($currentLang->getLocale(), $code)
+            ->setRewrittenUrl($currentLang->getLocale(), $rewrittenUrl)
             ->save();
 
         foreach ($wishList->getWishListProducts() as $wishListProduct) {
@@ -377,10 +360,12 @@ class WishListService
         $code = $this->createWishlistSlug($newWishList);
 
         $newWishList
-            ->setCode($code);
+            ->setCode($code)
+            ->save();
 
+        $rewrittenUrl = $this->createWishListUrl($newWishList);
         $newWishList
-            ->setRewrittenUrl($currentLang->getLocale(), $code)
+            ->setRewrittenUrl($currentLang->getLocale(), $rewrittenUrl)
             ->save();
 
         foreach ($wishList->getWishListProducts() as $wishListProduct) {
