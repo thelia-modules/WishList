@@ -45,7 +45,7 @@ use WishList\Model\WishListQuery;
  */
 class WishListProduct extends BaseLoop implements PropelSearchLoopInterface
 {
-    protected function getArgDefinitions()
+    protected function getArgDefinitions(): ArgumentCollection
     {
         return new ArgumentCollection(
             Argument::createIntListTypeArgument('id'),
@@ -54,7 +54,7 @@ class WishListProduct extends BaseLoop implements PropelSearchLoopInterface
     }
 
 
-    public function buildModelCriteria()
+    public function buildModelCriteria(): \Propel\Runtime\ActiveQuery\ModelCriteria
     {
         $customer = $this->securityContext->getCustomerUser();
         $customerId = null !== $customer ? $customer->getId() : null;
@@ -95,7 +95,7 @@ class WishListProduct extends BaseLoop implements PropelSearchLoopInterface
      *
      * @return LoopResult
      */
-    public function parseResults(LoopResult $loopResult)
+    public function parseResults(LoopResult $loopResult): LoopResult
     {
         /** @var \WishList\Model\WishListProduct $wishlistProduct */
         foreach ($loopResult->getResultDataCollection() as $wishlistProduct){

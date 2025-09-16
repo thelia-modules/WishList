@@ -8,7 +8,7 @@ use Thelia\Form\BaseForm;
 
 class AddWishListProductForm extends BaseForm
 {
-    protected function buildForm()
+    protected function buildForm(): void
     {
         $this->formBuilder
             ->add('wishListId', IntegerType::class)

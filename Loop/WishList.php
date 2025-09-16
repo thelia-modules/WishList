@@ -52,7 +52,7 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
      *
      * @return \Thelia\Core\Template\Loop\Argument\ArgumentCollection
      */
-    protected function getArgDefinitions()
+    protected function getArgDefinitions(): ArgumentCollection
     {
         return new ArgumentCollection(
             Argument::createIntListTypeArgument('id'),
@@ -67,7 +67,7 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
      * Return array of search results
      * @return WishListQuery
      */
-    public function buildModelCriteria()
+    public function buildModelCriteria(): \Propel\Runtime\ActiveQuery\ModelCriteria
     {
         $sessionId = null;
 
@@ -116,7 +116,7 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
      * @return LoopResult
      * @throws PropelException
      */
-    public function parseResults(LoopResult $loopResult)
+    public function parseResults(LoopResult $loopResult): LoopResult
     {
         /** @var \WishList\Model\WishList $wishlist */
         foreach ($loopResult->getResultDataCollection() as $wishlist) {
