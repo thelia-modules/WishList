@@ -26,9 +26,8 @@ namespace WishList;
 use Propel\Runtime\Connection\ConnectionInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator;
 use Symfony\Component\Finder\Finder;
-use Thelia\Install\Database;
+use Thelia\Core\Install\Database;
 use Thelia\Module\BaseModule;
-use WishList\Model\WishListProduct;
 use WishList\Model\WishListProductQuery;
 use WishList\Model\WishListQuery;
 
