@@ -64,7 +64,7 @@ class WishList extends AbstractSmartyPlugin
     /**
      * @return array of SmartyPluginDescriptor
      */
-    public function getPluginDescriptors()
+    public function getPluginDescriptors(): array
     {
         return [
             new SmartyPluginDescriptor("function", "in_wishlist", $this, "inWishList"),

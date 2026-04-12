@@ -28,7 +28,7 @@ use OpenApi\Annotations as OA;
 use OpenApi\Model\Api\ModelFactory;
 use OpenApi\Service\OpenApiService;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Thelia\Controller\Front\BaseFrontController;
 use Thelia\Core\HttpFoundation\JsonResponse;
@@ -36,7 +36,6 @@ use WishList\Model\WishListQuery;
 use WishList\Service\WishListService;
 
 /**
- * @Route("/open_api/wishlist", name="api_wishlist_")
  */
 class WishListController extends BaseFrontController
 {
@@ -66,6 +65,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/open_api/wishlist', name: 'api_wishlist_')]
     public function getWishList(WishListService $wishListService, Request $request, ModelFactory $modelFactory)
     {
         $wishListId = $request->get('wishListId');
@@ -74,7 +74,6 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/code/{code}", name="get_by_code", methods="GET")
      * @OA\Get(
      *     path="/wishlist/code/{code}",
      *     tags={"WishList"},
@@ -99,6 +98,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/code/{code}', name: 'get_by_code', methods: ['GET'])]
     public function getWishListByCode(string $code, ModelFactory $modelFactory)
     {
         $wishList = WishListQuery::create()->filterByCode($code)->findOne();
@@ -111,7 +111,6 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/lite/all", name="list_all_without_products", methods="GET")
      * @OA\Get(
      *     path="/wishlist/lite/all",
      *     tags={"WishList"},
@@ -132,6 +131,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/lite/all', name: 'list_all_without_products', methods: ['GET'])]
     public function getLiteWishLists(WishListService $wishListService, ModelFactory $modelFactory)
     {
         $wishLists = $wishListService->getAllWishLists();
@@ -145,7 +145,6 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/all", name="list_all", methods="GET")
      * @OA\Get(
      *     path="/wishlist/all",
      *     tags={"WishList"},
@@ -166,6 +165,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/all', name: 'list_all', methods: ['GET'])]
     public function getWishLists(WishListService $wishListService, ModelFactory $modelFactory)
     {
         $wishLists = $wishListService->getAllWishLists();
@@ -179,7 +179,6 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/create", name="create", methods="POST")
      * @OA\Post(
      *     path="/wishlist/create",
      *     tags={"WishList"},
@@ -228,6 +227,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/create', name: 'create', methods: ['POST'])]
     public function createWishList(Request $request, WishListService $wishListService, ModelFactory $modelFactory)
     {
         $data = json_decode($request->getContent(), true);
@@ -240,7 +240,6 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/duplicate/{wishListId}", name="duplicate", methods="POST")
      * @OA\Post(
      *     path="/wishlist/duplicate/{wishListId}",
      *     tags={"WishList"},
@@ -281,6 +280,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/duplicate/{wishListId}', name: 'duplicate', methods: ['POST'])]
     public function duplicateWishList($wishListId, Request $request, WishListService $wishListService, ModelFactory $modelFactory)
     {
         $data = json_decode($request->getContent(), true);
@@ -292,7 +292,6 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/duplicate_as_type/{wishListId}", name="duplicate_as_type", methods="POST")
      * @OA\Post(
      *     path="/wishlist/duplicate_as_type/{wishListId}",
      *     tags={"WishList"},
@@ -321,6 +320,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/duplicate_as_type/{wishListId}', name: 'duplicate_as_type', methods: ['POST'])]
     public function duplicateWishListAsType($wishListId, Request $request, WishListService $wishListService, ModelFactory $modelFactory): JsonResponse
     {
         $wishList = WishListQuery::create()->findOneById($wishListId);
@@ -346,7 +346,6 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/update/{wishListId}", name="update", methods="POST")
      * @OA\Post(
      *     path="/wishlist/update/{wishListId}",
      *     tags={"WishList"},
@@ -387,6 +386,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/update/{wishListId}', name: 'update', methods: ['POST'])]
     public function updateWishList($wishListId, Request $request, WishListService $wishListService, ModelFactory $modelFactory)
     {
         $data = json_decode($request->getContent(), true);
@@ -398,7 +398,6 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/delete/{wishListId}", name="delete", methods="POST")
      * @OA\Post(
      *     path="/wishlist/delete/{wishListId}",
      *     tags={"WishList"},
@@ -420,6 +419,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/delete/{wishListId}', name: 'delete', methods: ['POST'])]
     public function deleteWishList($wishListId, Request $request, WishListService $wishListService, ModelFactory $modelFactory)
     {
         $wishListService->deleteWishList($wishListId);
@@ -428,7 +428,6 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/add/{productSaleElementId}", name="add", methods="POST")
      * @OA\Post(
      *     path="/wishlist/add/{productSaleElementId}",
      *     tags={"WishList"},
@@ -473,6 +472,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/add/{productSaleElementId}', name: 'add', methods: ['POST'])]
     public function addProduct($productSaleElementId, Request $request, WishListService $wishListService, ModelFactory $modelFactory)
     {
         $data = json_decode($request->getContent(), true);
@@ -486,7 +486,6 @@ class WishListController extends BaseFrontController
         return OpenApiService::jsonResponse($this->getOpenApiWishList($wishListId, $modelFactory, $wishListService));
     }
     /**
-     * @Route("/set-default", name="set-default", methods="POST")
      * @OA\Post(
      *     path="/wishlist/set-default",
      *     tags={"WishList"},
@@ -520,6 +519,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/set-default', name: 'set-default', methods: ['POST'])]
     public function setDefaultWishList(Request $request, WishListService $wishListService, ModelFactory $modelFactory)
     {
         $data = json_decode($request->getContent(), true);
@@ -531,7 +531,6 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/remove/{productSaleElementId}", name="remove", methods="POST")
      * @OA\Post(
      *     path="/wishlist/remove/{productSaleElementId}",
      *     tags={"WishList"},
@@ -572,6 +571,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/remove/{productSaleElementId}', name: 'remove', methods: ['POST'])]
     public function removeProduct($productSaleElementId, WishListService $wishListService, ModelFactory $modelFactory, Request $request)
     {
         $data = json_decode($request->getContent(), true);
@@ -584,7 +584,6 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/clear/{wishListId}", name="clear", methods="POST")
      * @OA\Post(
      *     path="/wishlist/clear/{wishListId}",
      *     tags={"WishList"},
@@ -609,6 +608,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/clear/{wishListId}', name: 'clear', methods: ['POST'])]
     public function clear($wishListId, WishListService $wishListService, ModelFactory $modelFactory)
     {
         $wishListService->clearWishList($wishListId);
@@ -617,7 +617,6 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/exist/{productSaleElementId}/{wishListId}", name="exist", methods="GET")
      * @OA\Get(
      *     path="/wishlist/exist/{productSaleElementId}/{wishListId}",
      *     tags={"WishList"},
@@ -645,13 +644,13 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/exist/{productSaleElementId}/{wishListId}', name: 'exist', methods: ['GET'])]
     public function inWishList($productSaleElementId, $wishListId, WishListService $wishListService)
     {
         return new JsonResponse($wishListService->inWishList($productSaleElementId, $wishListId));
     }
 
     /**
-     * @Route("/add-to-cart/{wishListId}", name="add_to_cart", methods="POST")
      * @OA\Post(
      *     path="/wishlist/add-to-cart/{wishListId}",
      *     tags={"WishList"},
@@ -669,6 +668,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/add-to-cart/{wishListId}', name: 'add_to_cart', methods: ['POST'])]
     public function addToCart($wishListId, WishListService $wishListService)
     {
         $wishListService->addWishListToCart($wishListId);
@@ -677,7 +677,6 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/cart/from-wishlist/{wishListId}", name="cart_from_wishlist", methods="POST")
      * @OA\Post(
      *     path="/wishlist/cart/from-wishlist/{wishListId}",
      *     tags={"WishList"},
@@ -695,6 +694,7 @@ class WishListController extends BaseFrontController
      *     )
      * )
      */
+    #[Route('/cart/from-wishlist/{wishListId}', name: 'cart_from_wishlist', methods: ['POST'])]
     public function createCartFromWishlist($wishListId, WishListService $wishListService): JsonResponse
     {
         $wishListService->createCartFromWishlist($wishListId);

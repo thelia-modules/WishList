@@ -22,7 +22,7 @@
 /*************************************************************************************/
 namespace WishList\Controller\Front;
 
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Thelia\Controller\Front\BaseFrontController;
 use Thelia\Core\Template\ParserContext;
@@ -32,13 +32,13 @@ use WishList\Form\CreateUpdateWishListForm;
 use WishList\Service\WishListService;
 
 /**
- * @Route("/wishlist", name="wishlist_")
  */
 class WishListController extends BaseFrontController
 {
     /**
      * @Route("/create", name="create", methods="POST")
      */
+    #[Route('/wishlist', name: 'wishlist_')]
     public function createWishList(Request $request, WishListService $wishListService, ParserContext $parserContext)
     {
         $wishListForm = $this->createForm(CreateUpdateWishListForm::getName());
@@ -62,8 +62,8 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/update/{wishListId}", name="update", methods="POST")
      */
+    #[Route('/update/{wishListId}', name: 'update', methods: ['POST'])]
     public function updateWishList($wishListId, Request $request, WishListService $wishListService, ParserContext $parserContext)
     {
         $wishListForm = $this->createForm(CreateUpdateWishListForm::getName());
@@ -87,8 +87,8 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/delete/{wishListId}", name="delete", methods="POST")
      */
+    #[Route('/delete/{wishListId}', name: 'delete', methods: ['POST'])]
     public function deleteWishList($wishListId, Request $request, WishListService $wishListService)
     {
         $wishListService->deleteWishList($wishListId);
@@ -97,8 +97,8 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/add/{productId}", name="add", methods="POST")
      */
+    #[Route('/add/{productId}', name: 'add', methods: ['POST'])]
     public function addProduct($productId, Request $request, WishListService $wishListService, ParserContext $parserContext)
     {
         $wishListForm = $this->createForm(AddWishListProductForm::getName());
@@ -123,8 +123,8 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/remove/{productId}/{wishListId}", name="remove", methods="POST")
      */
+    #[Route('/remove/{productId}/{wishListId}', name: 'remove', methods: ['POST'])]
     public function removeProduct($productId, Request $request, WishListService $wishListService, $wishListId)
     {
         $wishListService->removeProduct($productId, $wishListId);
@@ -133,8 +133,8 @@ class WishListController extends BaseFrontController
     }
 
     /**
-     * @Route("/clear/{wishListId}", name="clear", methods="POST")
      */
+    #[Route('/clear/{wishListId}', name: 'clear', methods: ['POST'])]
     public function clear(Request $request, WishListService $wishListService, $wishListId)
     {
         $wishListService->clearWishList($wishListId);
