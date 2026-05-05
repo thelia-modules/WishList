@@ -27,10 +27,10 @@ namespace WishList\Controller\Front\Api;
 use OpenApi\Annotations as OA;
 use OpenApi\Model\Api\ModelFactory;
 use OpenApi\Service\OpenApiService;
+use OpenApi\Controller\Front\BaseFrontOpenApiController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
-use Thelia\Controller\Front\BaseFrontController;
 use Thelia\Core\HttpFoundation\JsonResponse;
 use WishList\Model\WishListQuery;
 use WishList\Service\WishListService;
@@ -38,7 +38,7 @@ use WishList\Service\WishListService;
 /**
  * @Route("/open_api/wishlist", name="api_wishlist_")
  */
-class WishListController extends BaseFrontController
+class WishListController extends BaseFrontOpenApiController
 {
     /**
      * @Route("", name="list", methods="GET")
