@@ -40,7 +40,7 @@ class WishListService
         $this->eventDispatcher = $eventDispatcher;
     }
 
-    public function addProduct($pseId, $quantity, $wishListId = null)
+    public function   addProduct($pseId, $quantity, $wishListId = null)
     {
         try {
             $wishList = $this->findWishListOrCreateDefault($wishListId);
@@ -96,6 +96,37 @@ class WishListService
         [$customerId, $sessionId] = $this->getCurrentUserOrSession();
 
         return null !== WishListProductQuery::getExistingObject($wishListId, $customerId, $sessionId, $pseId);
+    }
+
+    /**
+     * Returns every wishlist of the current customer (or session) that contains the given PSE.
+     *
+     * @return \Propel\Runtime\Collection\ObjectCollection|WishList[]
+     */
+    public function getWishListsContainingPse($pseId)
+    {
+        [$customerId, $sessionId] = $this->getCurrentUserOrSession();
+
+        $query = WishListQuery::create()
+            ->useWishListProductQuery()
+                ->filterByProductSaleElementsId($pseId)
+            ->endUse()
+            ->distinct();
+
+        if (null !== $customerId) {
+            $query->filterByCustomerId($customerId);
+        }
+
+        if (null !== $sessionId) {
+            $query->filterBySessionId($sessionId);
+        }
+
+        return $query->find();
+    }
+
+    public function isPseInAnyWishList($pseId): bool
+    {
+        return $this->getWishListsContainingPse($pseId)->count() > 0;
     }
 
     public function getWishList($wishListId)
