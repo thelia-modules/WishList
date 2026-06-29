@@ -47,3 +47,20 @@ Here is an example of using the "wishlist" loop :
 
 The `customer_id` argument in `wishlist` loop is allowed only if `backend_context`
 is 1, otherwise the current user ID is considered.
+
+
+## Live components
+
+To use the new live component system provided by symfony, add this code to your product card : 
+
+```twig
+{{ component('WishList:WishListButton', {pseId: this.defaultPseId}) }}
+```
+
+It's display whislist button and manage wishlist modal. 
+
+To provide feedback to the user after each wishlist update, you must add this component to the bottom of base.html.twig
+
+```twig
+{{ component('WishList:WishListAlert') }}
+```
