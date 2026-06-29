@@ -1,0 +1,8 @@
+<div class="WishlistAlert {% if not message %}hidden{% endif %}" {{ attributes }}>
+	<button class="WishlistAlert-iconClose" data-action="live#action" data-live-action-param="closeToast">
+		{{ ux_icon('close') }}
+	</button>
+	<p class="WishlistAlert-message">
+		{{ message }}
+	</p>
+</div>

@@ -1,0 +1,68 @@
+<div {{ attributes.defaults({class: 'WishListButton'} ) }}>
+	<button type="button" class="ButtonWishList {{ this.isInWishList ? 'in-wishlist' : '' }}" data-action="live#action" data-live-action-param="open" aria-label="{{ this.isInWishList ? 'Manage wishlists'|trans : 'Add to wishlist'|trans }}" aria-pressed="{{ this.isInWishList ? 'true' : 'false' }}">
+		{{ ux_icon(this.isInWishList ? 'heart-fill' : 'heart', { fill :this.isInWishList ? 'currentColor': 'transparent' } ) }}
+	</button>
+
+	{% if this.isOpen %}
+		<div class="WishListModal-overlay MobileDrawer-overlay" data-action="live#action" data-live-action-param="close"></div>
+
+		<div class="WishListModal MobileDrawer is-open">
+			<div class="MobileDrawer-header WishListModal-header">
+				<strong class="block mb-6 text-center text-black WishListModal-title h4">
+					{{ this.isInWishList ? 'Your wishlists'|trans : 'Add to a wishlist'|trans }}
+				</strong>
+				<button class="MobileDrawer-close" type="button" data-action="live#action" data-live-action-param="close">
+					{{ ux_icon('close') }}
+				</button>
+			</div>
+			<div class="WishListModal-body">
+				{% if this.isInWishList %}
+					{# Product already in >= 1 wishlist: list them with a remove action #}
+					<ul class="WishListModal-list">
+						{% for wishList in this.wishListsContaining %}
+							<li class="WishListModal-card WishListModal--selected">
+								<span class="WishListModal-cardIcon">{{ ux_icon('heart', {class : 'text-theme-medium'}) }}</span>
+								<span class="WishListModal-CardTitle">{{ wishList.title }}</span>
+								<button type="button" class="Button WishListModal-remove" data-action="live#action" data-live-action-param="removeFromWishList" data-live-wish-list-id-param="{{ wishList.id }}">
+									{{ ux_icon('delete') }}
+									<span>{{ 'Remove'|trans }}</span>
+								</button>
+							</li>
+						{% endfor %}
+					</ul>
+				{% else %}
+					<section class="WishListModal-section">
+						<h4 class="WishListModal-titleSection">{{ 'Create a new wishlist'|trans }}</h4>
+						{{ form_start(form, {attr: {
+                            'data-action': 'submit->live#action:prevent',
+                            'data-live-action-param': 'createAndAdd',
+                            class: 'WishListModal-form'
+                        }}) }}
+						{{ form_errors(form) }}
+						<div class="WishListModal-formRow">
+							{{ form_widget(form.title, {attr: {placeholder: 'Wishlist name'|trans}}) }}
+							{{ component('Flexy:Button', {text: 'Create & add'|trans, type: 'submit', class: 'Button--small'}) }}
+						</div>
+						{{ form_rest(form) }}
+						{{ form_end(form) }}
+					</section>
+
+					{% set existingWishLists = this.wishLists %}
+					{% if existingWishLists|length > 0 %}
+						<section class="WishListModal-section">
+							<h4 class="WishListModal-titleSection">{{ 'Add to an existing wishlist'|trans }}</h4>
+							<div class="WishListModal-grid">
+								{% for wishList in existingWishLists %}
+									<button type="button" class="WishListModal-card" data-action="live#action" data-live-action-param="addToWishList" data-live-wish-list-id-param="{{ wishList.id }}">
+										<span class="WishListModal-cardIcon">{{ ux_icon('heart', {class : 'text-theme-medium'}) }}</span>
+										<span class="WishListModal-cardTitle">{{ wishList.title }}</span>
+									</button>
+								{% endfor %}
+							</div>
+						</section>
+					{% endif %}
+				{% endif %}
+			</div>
+		</div>
+	{% endif %}
+</div>
