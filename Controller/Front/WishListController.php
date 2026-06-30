@@ -35,10 +35,7 @@ use WishList\Service\WishListService;
  */
 class WishListController extends BaseFrontController
 {
-    /**
-     * @Route("/create", name="create", methods="POST")
-     */
-    #[Route('/wishlist', name: 'wishlist_')]
+    #[Route('/wishlist/create', name: 'wishlist_create', methods: ['POST'])]
     public function createWishList(Request $request, WishListService $wishListService, ParserContext $parserContext)
     {
         $wishListForm = $this->createForm(CreateUpdateWishListForm::getName());
