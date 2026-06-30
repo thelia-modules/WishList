@@ -68,7 +68,7 @@ class WishListController extends BaseFrontController
     #[Route('/open_api/wishlist', name: 'api_wishlist_')]
     public function getWishList(WishListService $wishListService, Request $request, ModelFactory $modelFactory)
     {
-        $wishListId = $request->get('wishListId');
+        $wishListId = $request->attributes->get('wishListId', $request->query->get('wishListId', $request->request->get('wishListId')));
 
         return OpenApiService::jsonResponse($this->getOpenApiWishList($wishListId, $modelFactory, $wishListService));
     }
