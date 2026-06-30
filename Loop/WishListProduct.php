@@ -60,7 +60,10 @@ class WishListProduct extends BaseLoop implements PropelSearchLoopInterface
         $customerId = null !== $customer ? $customer->getId() : null;
         $sessionId = null;
         if (!$customer) {
-            $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
+            $request = $this->requestStack->getCurrentRequest();
+            if (null !== $request && $request->hasSession()) {
+                $sessionId = $request->getSession()->getId();
+            }
         }
 
         $wishListProducts = WishListProductQuery::create();

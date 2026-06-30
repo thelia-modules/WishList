@@ -135,7 +135,10 @@ class WishListService
         $customerId = $customer?->getId();
         $sessionId = null;
         if (!$customer) {
-            $sessionId = $this->requestStack->getCurrentRequest()?->getSession()->getId();
+            $request = $this->requestStack->getCurrentRequest();
+            if (null !== $request && $request->hasSession()) {
+                $sessionId = $request->getSession()->getId();
+            }
         }
 
         return $this->getWishListObject($wishListId, $customerId, $sessionId);
@@ -255,7 +258,10 @@ class WishListService
 
         $rewrittenUrl = $this->createWishListUrl($wishList);
         if (null !== $rewrittenUrl) {
-            $currentLang = $this->requestStack->getCurrentRequest()?->getSession()->get('thelia.current.lang');
+            $request = $this->requestStack->getCurrentRequest();
+            $currentLang = (null !== $request && $request->hasSession())
+                ? $request->getSession()->get('thelia.current.lang')
+                : Lang::getDefaultLanguage();
             $wishList
                 ->setRewrittenUrl($currentLang->getLocale(), $rewrittenUrl)
                 ->save();
@@ -290,7 +296,10 @@ class WishListService
     {
         [$customerId, $sessionId] = $this->getCurrentUserOrSession();
         /** @var Lang $currentLang */
-        $currentLang = $this->requestStack->getCurrentRequest()?->getSession()->get('thelia.current.lang');
+        $request = $this->requestStack->getCurrentRequest();
+        $currentLang = (null !== $request && $request->hasSession())
+            ? $request->getSession()->get('thelia.current.lang')
+            : Lang::getDefaultLanguage();
 
         $wishList = $this->getWishListObject($wishListId, $customerId, $sessionId);
 
@@ -350,7 +359,10 @@ class WishListService
 
         if (null !== $wishList) {
             // Store a new empty cart in the session.
-            $this->requestStack->getCurrentRequest()?->getSession()->clearSessionCart($this->eventDispatcher);
+            $request = $this->requestStack->getCurrentRequest();
+            if (null !== $request && $request->hasSession()) {
+                $request->getSession()->clearSessionCart($this->eventDispatcher);
+            }
 
             $this->addWishlistProductsToCart($wishList);
         }
@@ -358,7 +370,11 @@ class WishListService
 
     private function addWishlistProductsToCart(WishList $wishList): void
     {
-        $cart = $this->requestStack->getCurrentRequest()?->getSession()->getSessionCart($this->eventDispatcher);
+        $request = $this->requestStack->getCurrentRequest();
+        if (null === $request || !$request->hasSession()) {
+            return;
+        }
+        $cart = $request->getSession()->getSessionCart($this->eventDispatcher);
 
         foreach ($wishList->getWishListProducts() as $wishListProduct) {
             $event = new CartEvent($cart);
@@ -381,7 +397,10 @@ class WishListService
         $wishList = WishListQuery::create()->findPk($wishListId);
 
         /** @var Lang $currentLang */
-        $currentLang = $this->requestStack->getCurrentRequest()?->getSession()->get('thelia.current.lang');
+        $request = $this->requestStack->getCurrentRequest();
+        $currentLang = (null !== $request && $request->hasSession())
+            ? $request->getSession()->get('thelia.current.lang')
+            : Lang::getDefaultLanguage();
 
         $newWishList = (new WishList())
             ->setTitle($wishList->getTitle())
@@ -446,7 +465,10 @@ class WishListService
         $customerId = $customer?->getId();
         $sessionId = null;
         if (!$customer) {
-            $sessionId = $this->requestStack->getCurrentRequest()?->getSession()->getId();
+            $request = $this->requestStack->getCurrentRequest();
+            if (null !== $request && $request->hasSession()) {
+                $sessionId = $request->getSession()->getId();
+            }
         }
 
         return [$customerId, $sessionId];

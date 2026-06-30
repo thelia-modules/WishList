@@ -33,7 +33,11 @@ class CustomerListener implements EventSubscriberInterface
     // On login merge session and DB wishlists then erase useless session wishlist
     public function customerLogin() : void
     {
-        $sessionId = $this->requestStack->getCurrentRequest()->getSession()->getId();
+        $request = $this->requestStack->getCurrentRequest();
+        if (null === $request || !$request->hasSession()) {
+            return;
+        }
+        $sessionId = $request->getSession()->getId();
         $this->wishListService->sessionToUser($sessionId);
     }
 

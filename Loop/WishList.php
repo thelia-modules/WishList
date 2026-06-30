@@ -77,7 +77,10 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
             $customerId = $customer?->getId();
 
             if (! $customer) {
-                $sessionId = $this->requestStack->getCurrentRequest()?->getSession()->getId();
+                $request = $this->requestStack->getCurrentRequest();
+                if (null !== $request && $request->hasSession()) {
+                    $sessionId = $request->getSession()->getId();
+                }
             }
         }
 
@@ -124,7 +127,10 @@ class WishList extends BaseLoop implements PropelSearchLoopInterface
             $loopResultRow = new LoopResultRow($wishlist);
 
             /** @var Lang $currentLang */
-            $currentLocale = $this->requestStack->getCurrentRequest()?->getSession()->getLang()->getLocale();
+            $request = $this->requestStack->getCurrentRequest();
+            $currentLocale = (null !== $request && $request->hasSession())
+                ? $request->getSession()->getLang()->getLocale()
+                : (\Thelia\Model\LangQuery::create()->findOneByByDefault(true)?->getLocale() ?? 'en_US');
 
             $loopResultRow
                 ->set("ID", $wishlist->getId())

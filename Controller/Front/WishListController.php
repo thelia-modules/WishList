@@ -58,7 +58,7 @@ class WishListController extends BaseFrontController
             return $this->generateErrorRedirect($wishListForm);
         }
 
-        return $this->generateRedirect($request->getSession()->getReturnToUrl());
+        return $this->generateRedirect($request->hasSession() ? $request->getSession()->getReturnToUrl() : '/');
     }
 
     /**
@@ -83,7 +83,7 @@ class WishListController extends BaseFrontController
             return $this->generateErrorRedirect($wishListForm);
         }
 
-        return $this->generateRedirect($request->getSession()->getReturnToUrl());
+        return $this->generateRedirect($request->hasSession() ? $request->getSession()->getReturnToUrl() : '/');
     }
 
     /**
@@ -93,7 +93,7 @@ class WishListController extends BaseFrontController
     {
         $wishListService->deleteWishList($wishListId);
 
-        return $this->generateRedirect($request->getSession()->getReturnToUrl());
+        return $this->generateRedirect($request->hasSession() ? $request->getSession()->getReturnToUrl() : '/');
     }
 
     /**
@@ -119,7 +119,7 @@ class WishListController extends BaseFrontController
             return $this->generateErrorRedirect($wishListForm);
         }
 
-        return $this->generateRedirect($request->getSession()->getReturnToUrl());
+        return $this->generateRedirect($request->hasSession() ? $request->getSession()->getReturnToUrl() : '/');
     }
 
     /**
@@ -129,7 +129,7 @@ class WishListController extends BaseFrontController
     {
         $wishListService->removeProduct($productId, $wishListId);
 
-        return $this->generateRedirect($request->getSession()->getReturnToUrl());
+        return $this->generateRedirect($request->hasSession() ? $request->getSession()->getReturnToUrl() : '/');
     }
 
     /**
@@ -139,6 +139,6 @@ class WishListController extends BaseFrontController
     {
         $wishListService->clearWishList($wishListId);
 
-        return $this->generateRedirect($request->getSession()->getReturnToUrl());
+        return $this->generateRedirect($request->hasSession() ? $request->getSession()->getReturnToUrl() : '/');
     }
 }
