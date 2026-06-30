@@ -29,6 +29,7 @@ use Thelia\Core\Template\ParserContext;
 use Thelia\Log\Tlog;
 use WishList\Form\AddWishListProductForm;
 use WishList\Form\CreateUpdateWishListForm;
+use WishList\Form\WishListActionForm;
 use WishList\Service\WishListService;
 
 /**
@@ -83,12 +84,25 @@ class WishListController extends BaseFrontController
         return $this->generateRedirect($request->hasSession() ? $request->getSession()->getReturnToUrl() : '/');
     }
 
-    /**
-     */
     #[Route('/delete/{wishListId}', name: 'delete', methods: ['POST'])]
-    public function deleteWishList($wishListId, Request $request, WishListService $wishListService)
+    public function deleteWishList($wishListId, Request $request, WishListService $wishListService, ParserContext $parserContext)
     {
-        $wishListService->deleteWishList($wishListId);
+        $actionForm = $this->createForm(WishListActionForm::getName());
+        try {
+            $this->validateForm($actionForm);
+            $wishListService->deleteWishList($wishListId);
+        } catch (\Exception $exception) {
+            Tlog::getInstance()->error($exception->getMessage());
+
+            $actionForm->setErrorMessage($exception->getMessage());
+
+            $parserContext
+                ->addForm($actionForm)
+                ->setGeneralError($exception->getMessage())
+            ;
+
+            return $this->generateErrorRedirect($actionForm);
+        }
 
         return $this->generateRedirect($request->hasSession() ? $request->getSession()->getReturnToUrl() : '/');
     }
@@ -119,22 +133,48 @@ class WishListController extends BaseFrontController
         return $this->generateRedirect($request->hasSession() ? $request->getSession()->getReturnToUrl() : '/');
     }
 
-    /**
-     */
     #[Route('/remove/{productId}/{wishListId}', name: 'remove', methods: ['POST'])]
-    public function removeProduct($productId, Request $request, WishListService $wishListService, $wishListId)
+    public function removeProduct($productId, Request $request, WishListService $wishListService, $wishListId, ParserContext $parserContext)
     {
-        $wishListService->removeProduct($productId, $wishListId);
+        $actionForm = $this->createForm(WishListActionForm::getName());
+        try {
+            $this->validateForm($actionForm);
+            $wishListService->removeProduct($productId, $wishListId);
+        } catch (\Exception $exception) {
+            Tlog::getInstance()->error($exception->getMessage());
+
+            $actionForm->setErrorMessage($exception->getMessage());
+
+            $parserContext
+                ->addForm($actionForm)
+                ->setGeneralError($exception->getMessage())
+            ;
+
+            return $this->generateErrorRedirect($actionForm);
+        }
 
         return $this->generateRedirect($request->hasSession() ? $request->getSession()->getReturnToUrl() : '/');
     }
 
-    /**
-     */
     #[Route('/clear/{wishListId}', name: 'clear', methods: ['POST'])]
-    public function clear(Request $request, WishListService $wishListService, $wishListId)
+    public function clear(Request $request, WishListService $wishListService, $wishListId, ParserContext $parserContext)
     {
-        $wishListService->clearWishList($wishListId);
+        $actionForm = $this->createForm(WishListActionForm::getName());
+        try {
+            $this->validateForm($actionForm);
+            $wishListService->clearWishList($wishListId);
+        } catch (\Exception $exception) {
+            Tlog::getInstance()->error($exception->getMessage());
+
+            $actionForm->setErrorMessage($exception->getMessage());
+
+            $parserContext
+                ->addForm($actionForm)
+                ->setGeneralError($exception->getMessage())
+            ;
+
+            return $this->generateErrorRedirect($actionForm);
+        }
 
         return $this->generateRedirect($request->hasSession() ? $request->getSession()->getReturnToUrl() : '/');
     }
