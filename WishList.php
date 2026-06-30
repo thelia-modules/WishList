@@ -85,7 +85,7 @@ class WishList extends BaseModule
     public static function configureServices(ServicesConfigurator $servicesConfigurator): void
     {
         $servicesConfigurator->load(self::getModuleCode().'\\', __DIR__)
-            ->exclude(["/I18n/*"])
+            ->exclude(["/I18n/*", "/Controller/Front/Api/*", "/Model/Api/*"])
             ->autowire(true)
             ->autoconfigure(true);
     }

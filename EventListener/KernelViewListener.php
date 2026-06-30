@@ -1,50 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WishList\EventListener;
 
-use Page\Model\PageQuery;
-use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\Exception\PropelException;
-use SmartyException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
-use Thelia\Core\Template\TemplateHelperInterface;
 use Thelia\Model\ConfigQuery;
 use Thelia\Tools\URL;
-use TheliaSmarty\Template\SmartyParser;
 use WishList\Model\WishListQuery;
 use WishList\Service\WishListService;
 
 class KernelViewListener implements EventSubscriberInterface
 {
-    protected RequestStack $requestStack;
-    protected SmartyParser $parser;
-    protected TemplateHelperInterface $templateHelper;
-    protected WishListService $wishListService;
-
     public function __construct(
-        RequestStack $requestStack,
-        SmartyParser $parser,
-        TemplateHelperInterface $templateHelper,
-        WishListService $wishListService
+        protected RequestStack $requestStack,
+        protected WishListService $wishListService
     ) {
-        $this->requestStack = $requestStack;
-        $this->parser = $parser;
-        $this->templateHelper = $templateHelper;
-        $this->wishListService = $wishListService;
     }
 
     /**
-     * @throws SmartyException
      * @throws PropelException
      */
-    public function onKernelView(ViewEvent $event)
+    public function onKernelView(ViewEvent $event): void
     {
-        $this->parser->setTemplateDefinition($this->templateHelper->getActiveFrontTemplate(), true);
-
         $request = $this->requestStack->getCurrentRequest();
         $view = $request->attributes->get('_view');
         $viewId = $request->attributes->get($view . '_id');
