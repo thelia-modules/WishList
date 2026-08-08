@@ -1,9 +1,9 @@
 {
   "name": "thelia/wishlist-module",
-  "license": "GPL-3.0+",
+  "license": "GPL-3.0-or-later",
   "type": "thelia-module",
   "require": {
-    "thelia/installer": "~1.1",
+    "thelia/installer": "^1.6",
     "cocur/slugify": "~4.5"
   },
   "extra": {
