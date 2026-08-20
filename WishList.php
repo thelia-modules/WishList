@@ -41,7 +41,7 @@ class WishList extends BaseModule
      * Like install and destroy
      */
 
-    public function postActivation(ConnectionInterface $con = null) : void
+    public function postActivation(?ConnectionInterface $con = null) : void
     {
 
         try {
@@ -61,7 +61,7 @@ class WishList extends BaseModule
      * @param $newVersion
      * @param ConnectionInterface $con
      */
-    public function update($currentVersion, $newVersion, ConnectionInterface $con = null): void
+    public function update($currentVersion, $newVersion, ?ConnectionInterface $con = null): void
     {
         $finder = Finder::create()
             ->name('*.sql')
@@ -85,7 +85,7 @@ class WishList extends BaseModule
     public static function configureServices(ServicesConfigurator $servicesConfigurator): void
     {
         $servicesConfigurator->load(self::getModuleCode().'\\', __DIR__)
-            ->exclude(["/I18n/*", "/Controller/Front/Api/*", "/Model/Api/*"])
+            ->exclude(["/I18n/*", "/Controller/Front/Api/*", "/Model/Api/*", "/Dto/*", "/Exception/*"])
             ->autowire(true)
             ->autoconfigure(true);
     }
