@@ -40,13 +40,20 @@ class WishListService
         $this->eventDispatcher = $eventDispatcher;
     }
 
-    public function   addProduct($pseId, $quantity, $wishListId = null)
+    public function addProduct($pseId, $quantity, $wishListId = null)
     {
         try {
             $wishList = $this->findWishListOrCreateDefault($wishListId);
 
             if (null === $wishList) {
                 throw new \Exception(Translator::getInstance()->trans('There is no wishlist with this id for this customer', [], WishListModule::DOMAIN_NAME));
+            }
+
+            // A null or non-positive quantity means the customer wants the line gone.
+            if ((int) $quantity <= 0) {
+                $this->removeProduct($pseId, $wishList->getId());
+
+                return $wishList->getId();
             }
 
             $productWishList = WishListProductQuery::create()
