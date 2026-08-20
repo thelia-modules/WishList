@@ -21,9 +21,13 @@ use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\SecurityContext;
 use Thelia\Core\Translation\Translator;
 use Thelia\Log\Tlog;
+use Thelia\Model\ConfigQuery;
 use Thelia\Model\Lang;
+use WishList\Dto\RejectedWishListProduct;
+use WishList\Dto\RejectionReason;
 use WishList\Exception\DuplicateWishListTitleException;
 use WishList\Model\WishList;
+use WishList\Model\WishListProduct;
 use WishList\Model\WishListProductQuery;
 use WishList\Model\WishListQuery;
 use WishList\WishList as WishListModule;
@@ -367,54 +371,155 @@ class WishListService
         }
     }
 
-    public function addWishListToCart($wishListId): void
+    /**
+     * @return RejectedWishListProduct[] lines that were skipped or capped, for the caller to display
+     */
+    public function addWishListToCart($wishListId): array
     {
         [$customerId, $sessionId] = $this->getCurrentUserOrSession();
 
         $wishList = $this->getWishListObject($wishListId, $customerId, $sessionId);
 
-        if (null !== $wishList) {
-            $this->addWishlistProductsToCart($wishList);
+        if (null === $wishList) {
+            return [];
         }
+
+        return $this->addWishlistProductsToCart($wishList);
     }
 
-    public function createCartFromWishlist($wishListId): void
+    /**
+     * @return RejectedWishListProduct[] lines that were skipped or capped, for the caller to display
+     */
+    public function createCartFromWishlist($wishListId): array
     {
         [$customerId, $sessionId] = $this->getCurrentUserOrSession();
 
         $wishList = $this->getWishListObject($wishListId, $customerId, $sessionId);
 
-        if (null !== $wishList) {
-            // Store a new empty cart in the session.
-            $request = $this->requestStack->getCurrentRequest();
-            if (null !== $request && $request->hasSession()) {
-                $request->getSession()->clearSessionCart($this->eventDispatcher);
-            }
-
-            $this->addWishlistProductsToCart($wishList);
+        if (null === $wishList) {
+            return [];
         }
+
+        // Store a new empty cart in the session.
+        $request = $this->requestStack->getCurrentRequest();
+        if (null !== $request && $request->hasSession()) {
+            $request->getSession()->clearSessionCart($this->eventDispatcher);
+        }
+
+        return $this->addWishlistProductsToCart($wishList);
     }
 
-    private function addWishlistProductsToCart(WishList $wishList): void
+    /**
+     * @return RejectedWishListProduct[]
+     */
+    private function addWishlistProductsToCart(WishList $wishList): array
     {
         $request = $this->requestStack->getCurrentRequest();
         if (null === $request || !$request->hasSession()) {
-            return;
+            return [];
         }
         $cart = $request->getSession()->getSessionCart($this->eventDispatcher);
 
+        $checkStock = ConfigQuery::checkAvailableStock();
+        $rejected = [];
+
         foreach ($wishList->getWishListProducts() as $wishListProduct) {
+            $rejection = $this->rejectionFor($wishListProduct, $checkStock);
+            $quantity = $rejection?->acceptedQuantity ?? (int) $wishListProduct->getQuantity();
+
+            if (null !== $rejection) {
+                $rejected[] = $rejection;
+            }
+
+            if ($quantity <= 0) {
+                continue;
+            }
+
             $event = new CartEvent($cart);
             $event
                 ->setProduct($wishListProduct->getProductSaleElements()->getProductId())
                 ->setProductSaleElementsId($wishListProduct->getProductSaleElementsId())
-                ->setQuantity($wishListProduct->getQuantity())
+                ->setQuantity($quantity)
                 ->setAppend(true)
                 ->setNewness(true)
             ;
 
             $this->eventDispatcher->dispatch($event, TheliaEvents::CART_ADDITEM);
         }
+
+        return $rejected;
+    }
+
+    /**
+     * Describes a wish list line that cannot reach the cart as requested. Returning null
+     * means the whole requested quantity is accepted.
+     *
+     * Stock is only taken into account when the shop checks availability and the product is
+     * not virtual, which mirrors what the core does on cart quantity updates.
+     */
+    private function rejectionFor(WishListProduct $wishListProduct, bool $checkStock): ?RejectedWishListProduct
+    {
+        $requestedQuantity = (int) $wishListProduct->getQuantity();
+
+        $productSaleElements = $wishListProduct->getProductSaleElements();
+
+        if (null === $productSaleElements) {
+            return new RejectedWishListProduct(
+                (int) $wishListProduct->getProductSaleElementsId(),
+                null,
+                null,
+                $requestedQuantity,
+                0,
+                RejectionReason::ProductSaleElementMissing
+            );
+        }
+
+        $product = $productSaleElements->getProduct();
+        $productId = $productSaleElements->getProductId();
+        $productTitle = $product?->getTitle();
+
+        if (null === $product || 1 !== (int) $product->getVisible()) {
+            return new RejectedWishListProduct(
+                (int) $wishListProduct->getProductSaleElementsId(),
+                $productId,
+                $productTitle,
+                $requestedQuantity,
+                0,
+                RejectionReason::ProductNotVisible
+            );
+        }
+
+        if (!$checkStock || 1 === (int) $product->getVirtual()) {
+            return null;
+        }
+
+        $availableQuantity = (int) $productSaleElements->getQuantity();
+
+        if ($availableQuantity <= 0) {
+            return new RejectedWishListProduct(
+                (int) $wishListProduct->getProductSaleElementsId(),
+                $productId,
+                $productTitle,
+                $requestedQuantity,
+                0,
+                RejectionReason::OutOfStock
+            );
+        }
+
+        $quantity = min($requestedQuantity, $availableQuantity);
+
+        if ($quantity < $requestedQuantity) {
+            return new RejectedWishListProduct(
+                (int) $wishListProduct->getProductSaleElementsId(),
+                $productId,
+                $productTitle,
+                $requestedQuantity,
+                $quantity,
+                RejectionReason::StockLimited
+            );
+        }
+
+        return null;
     }
 
     public function cloneWishList($wishListId)
