@@ -437,7 +437,7 @@ class WishListService
 
             $event = new CartEvent($cart);
             $event
-                ->setProduct($wishListProduct->getProductSaleElements()->getProductId())
+                ->setProductId($wishListProduct->getProductSaleElements()->getProductId())
                 ->setProductSaleElementsId($wishListProduct->getProductSaleElementsId())
                 ->setQuantity($quantity)
                 ->setAppend(true)
