@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WishList\LiveComponent;
 
+use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
 use Symfony\UX\LiveComponent\Attribute\AsLiveComponent;
 use Symfony\UX\LiveComponent\Attribute\LiveAction;
@@ -14,6 +15,7 @@ use Symfony\UX\LiveComponent\ComponentWithFormTrait;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 use Thelia\Controller\Front\BaseFrontController;
 use Thelia\Core\Form\FormServiceInterface;
+use WishList\Exception\DuplicateWishListTitleException;
 use WishList\Form\CreateUpdateWishListForm;
 use WishList\Service\WishListService;
 
@@ -92,24 +94,30 @@ class WishListButton extends BaseFrontController
     {
         $this->submitForm();
 
-        try {
-            $form = $this->getForm();
+        $form = $this->getForm();
 
-            if (!$form->isValid()) {
-                return;
-            }
-            $title = $form->getData()['title'] ?? null;
-            $wishList = $this->wishListService->createUpdateWishList($title);
-            $this->wishListService->addProduct($this->pseId, 1, $wishList->getId());
-
-            $this->emit('wishlist:alert', [
-                'message' => $this->translator->trans('Product added to your wishlist'),
-            ]);
-            $this->close();
-
-            $this->resetForm();
-        } catch (\Throwable $th) {
-            //throw $th;
+        if (!$form->isValid()) {
+            return;
         }
+
+        $title = $form->getData()['title'] ?? null;
+
+        try {
+            $wishList = $this->wishListService->createUpdateWishList($title);
+        } catch (DuplicateWishListTitleException $exception) {
+            // Keep the modal open with the name still filled in so the customer can amend it.
+            $form->get('title')->addError(new FormError($exception->getMessage()));
+
+            return;
+        }
+
+        $this->wishListService->addProduct($this->pseId, 1, $wishList->getId());
+
+        $this->emit('wishlist:alert', [
+            'message' => $this->translator->trans('Product added to your wishlist'),
+        ]);
+        $this->close();
+
+        $this->resetForm();
     }
 }
