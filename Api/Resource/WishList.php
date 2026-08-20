@@ -39,6 +39,7 @@ use WishList\Model\Map\WishListTableMap;
     filterClass: SearchFilter::class,
     properties: [
         'id',
+        'title',
         'code',
         'customerId',
         'sessionId',
@@ -63,6 +64,9 @@ class WishList implements PropelResourceInterface
 
     #[Groups([self::GROUP_ADMIN_READ, self::GROUP_FRONT_READ])]
     public ?int $customerId = null;
+
+    #[Groups([self::GROUP_ADMIN_READ, self::GROUP_FRONT_READ])]
+    public ?string $title = null;
 
     #[Groups([self::GROUP_ADMIN_READ, self::GROUP_FRONT_READ])]
     public ?string $code = null;
@@ -92,6 +96,18 @@ class WishList implements PropelResourceInterface
     public function setCustomerId(?int $customerId): self
     {
         $this->customerId = $customerId;
+        return $this;
+    }
+
+    public function getTitle(): ?string
+    {
+        return $this->title;
+    }
+
+    public function setTitle(?string $title): self
+    {
+        $this->title = $title;
+
         return $this;
     }
 

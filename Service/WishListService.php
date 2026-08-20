@@ -21,14 +21,22 @@ use Thelia\Core\Event\TheliaEvents;
 use Thelia\Core\Security\SecurityContext;
 use Thelia\Core\Translation\Translator;
 use Thelia\Log\Tlog;
+use Thelia\Model\ConfigQuery;
 use Thelia\Model\Lang;
+use Thelia\Model\Product;
+use WishList\Dto\RejectedWishListProduct;
+use WishList\Dto\RejectionReason;
+use WishList\Exception\DuplicateWishListTitleException;
 use WishList\Model\WishList;
+use WishList\Model\WishListProduct;
 use WishList\Model\WishListProductQuery;
 use WishList\Model\WishListQuery;
 use WishList\WishList as WishListModule;
 
 class WishListService
 {
+    public const DEFAULT_WISH_LIST_TITLE = 'Default';
+
     protected $securityContext;
     protected $requestStack;
     protected $eventDispatcher;
@@ -40,13 +48,20 @@ class WishListService
         $this->eventDispatcher = $eventDispatcher;
     }
 
-    public function   addProduct($pseId, $quantity, $wishListId = null)
+    public function addProduct($pseId, $quantity, $wishListId = null)
     {
         try {
             $wishList = $this->findWishListOrCreateDefault($wishListId);
 
             if (null === $wishList) {
                 throw new \Exception(Translator::getInstance()->trans('There is no wishlist with this id for this customer', [], WishListModule::DOMAIN_NAME));
+            }
+
+            // A null or non-positive quantity means the customer wants the line gone.
+            if ((int) $quantity <= 0) {
+                $this->removeProduct($pseId, $wishList->getId());
+
+                return $wishList->getId();
             }
 
             $productWishList = WishListProductQuery::create()
@@ -199,7 +214,14 @@ class WishListService
             return $defaultWishList;
         }
 
-        return $this->createUpdateWishList('Default');
+        // The owner may already own an untagged list bearing the default title: reuse it
+        // rather than letting the title uniqueness check reject the implicit creation.
+        $existingDefault = $this->findOwnedWishListByTitle(self::DEFAULT_WISH_LIST_TITLE);
+        if (null !== $existingDefault) {
+            return $existingDefault;
+        }
+
+        return $this->createUpdateWishList(self::DEFAULT_WISH_LIST_TITLE);
     }
 
     public function setWishListToDefault($wishListId): void
@@ -222,9 +244,14 @@ class WishListService
         $newDefaultWishList->setDefault(1)->save();
     }
 
+    /**
+     * @throws DuplicateWishListTitleException when the owner already uses this title on another list
+     */
     public function createUpdateWishList($title, $products = null, $wishListId = null)
     {
         [$customerId, $sessionId] = $this->getCurrentUserOrSession();
+
+        $this->assertTitleIsAvailable($title, $wishListId);
 
         $rewrittenUrl = null;
         if (null === $wishList = $this->getWishListObject($wishListId, $customerId, $sessionId)) {
@@ -292,8 +319,13 @@ class WishListService
         }
     }
 
+    /**
+     * @throws DuplicateWishListTitleException when the owner already uses this title on another list
+     */
     public function duplicateWishList($wishListId, $title)
     {
+        $this->assertTitleIsAvailable($title);
+
         [$customerId, $sessionId] = $this->getCurrentUserOrSession();
         /** @var Lang $currentLang */
         $request = $this->requestStack->getCurrentRequest();
@@ -340,54 +372,155 @@ class WishListService
         }
     }
 
-    public function addWishListToCart($wishListId): void
+    /**
+     * @return RejectedWishListProduct[] lines that were skipped or capped, for the caller to display
+     */
+    public function addWishListToCart($wishListId): array
     {
         [$customerId, $sessionId] = $this->getCurrentUserOrSession();
 
         $wishList = $this->getWishListObject($wishListId, $customerId, $sessionId);
 
-        if (null !== $wishList) {
-            $this->addWishlistProductsToCart($wishList);
+        if (null === $wishList) {
+            return [];
         }
+
+        return $this->addWishlistProductsToCart($wishList);
     }
 
-    public function createCartFromWishlist($wishListId): void
+    /**
+     * @return RejectedWishListProduct[] lines that were skipped or capped, for the caller to display
+     */
+    public function createCartFromWishlist($wishListId): array
     {
         [$customerId, $sessionId] = $this->getCurrentUserOrSession();
 
         $wishList = $this->getWishListObject($wishListId, $customerId, $sessionId);
 
-        if (null !== $wishList) {
-            // Store a new empty cart in the session.
-            $request = $this->requestStack->getCurrentRequest();
-            if (null !== $request && $request->hasSession()) {
-                $request->getSession()->clearSessionCart($this->eventDispatcher);
-            }
-
-            $this->addWishlistProductsToCart($wishList);
+        if (null === $wishList) {
+            return [];
         }
+
+        // Store a new empty cart in the session.
+        $request = $this->requestStack->getCurrentRequest();
+        if (null !== $request && $request->hasSession()) {
+            $request->getSession()->clearSessionCart($this->eventDispatcher);
+        }
+
+        return $this->addWishlistProductsToCart($wishList);
     }
 
-    private function addWishlistProductsToCart(WishList $wishList): void
+    /**
+     * @return RejectedWishListProduct[]
+     */
+    private function addWishlistProductsToCart(WishList $wishList): array
     {
         $request = $this->requestStack->getCurrentRequest();
         if (null === $request || !$request->hasSession()) {
-            return;
+            return [];
         }
         $cart = $request->getSession()->getSessionCart($this->eventDispatcher);
 
+        $checkStock = ConfigQuery::checkAvailableStock();
+        $rejected = [];
+
         foreach ($wishList->getWishListProducts() as $wishListProduct) {
+            $rejection = $this->rejectionFor($wishListProduct, $checkStock);
+            $quantity = $rejection?->acceptedQuantity ?? (int) $wishListProduct->getQuantity();
+
+            if (null !== $rejection) {
+                $rejected[] = $rejection;
+            }
+
+            if ($quantity <= 0) {
+                continue;
+            }
+
             $event = new CartEvent($cart);
             $event
-                ->setProduct($wishListProduct->getProductSaleElements()->getProductId())
+                ->setProductId($wishListProduct->getProductSaleElements()->getProductId())
                 ->setProductSaleElementsId($wishListProduct->getProductSaleElementsId())
-                ->setQuantity($wishListProduct->getQuantity())
+                ->setQuantity($quantity)
                 ->setAppend(true)
                 ->setNewness(true)
             ;
 
             $this->eventDispatcher->dispatch($event, TheliaEvents::CART_ADDITEM);
         }
+
+        return $rejected;
+    }
+
+    /**
+     * Describes a wish list line that cannot reach the cart as requested. Returning null
+     * means the whole requested quantity is accepted.
+     *
+     * Stock is only taken into account when the shop checks availability and the product is
+     * not virtual, which mirrors what the core does on cart quantity updates.
+     */
+    private function rejectionFor(WishListProduct $wishListProduct, bool $checkStock): ?RejectedWishListProduct
+    {
+        $requestedQuantity = (int) $wishListProduct->getQuantity();
+
+        $productSaleElements = $wishListProduct->getProductSaleElements();
+
+        if (null === $productSaleElements) {
+            return new RejectedWishListProduct(
+                (int) $wishListProduct->getProductSaleElementsId(),
+                null,
+                null,
+                $requestedQuantity,
+                0,
+                RejectionReason::ProductSaleElementMissing
+            );
+        }
+
+        $product = $productSaleElements->getProduct();
+        $productId = $productSaleElements->getProductId();
+        $productTitle = $this->productTitle($product);
+
+        if (null === $product || 1 !== (int) $product->getVisible()) {
+            return new RejectedWishListProduct(
+                (int) $wishListProduct->getProductSaleElementsId(),
+                $productId,
+                $productTitle,
+                $requestedQuantity,
+                0,
+                RejectionReason::ProductNotVisible
+            );
+        }
+
+        if (!$checkStock || 1 === (int) $product->getVirtual()) {
+            return null;
+        }
+
+        $availableQuantity = (int) $productSaleElements->getQuantity();
+
+        if ($availableQuantity <= 0) {
+            return new RejectedWishListProduct(
+                (int) $wishListProduct->getProductSaleElementsId(),
+                $productId,
+                $productTitle,
+                $requestedQuantity,
+                0,
+                RejectionReason::OutOfStock
+            );
+        }
+
+        $quantity = min($requestedQuantity, $availableQuantity);
+
+        if ($quantity < $requestedQuantity) {
+            return new RejectedWishListProduct(
+                (int) $wishListProduct->getProductSaleElementsId(),
+                $productId,
+                $productTitle,
+                $requestedQuantity,
+                $quantity,
+                RejectionReason::StockLimited
+            );
+        }
+
+        return null;
     }
 
     public function cloneWishList($wishListId)
@@ -425,6 +558,31 @@ class WishListService
         return $newWishList;
     }
 
+    /**
+     * A catalogue is rarely translated in every locale Propel defaults to, so the title is
+     * looked up in the locale of the request, then in the shop one, and the reference is
+     * kept as a last resort: a rejected line must always be nameable to the customer.
+     */
+    private function productTitle(?Product $product): ?string
+    {
+        if (null === $product) {
+            return null;
+        }
+
+        $request = $this->requestStack->getCurrentRequest();
+        $locales = array_filter([$request?->getLocale(), Lang::getDefaultLanguage()->getLocale()]);
+
+        foreach ($locales as $locale) {
+            $title = $product->setLocale($locale)->getTitle();
+
+            if (null !== $title && '' !== $title) {
+                return $title;
+            }
+        }
+
+        return $product->getRef();
+    }
+
     protected function getWishListObject($wishListId, $customerId, $sessionId): ?WishList
     {
         $wishList = WishListQuery::create()
@@ -439,6 +597,54 @@ class WishListService
         }
 
         return $wishList->findOne();
+    }
+
+    /**
+     * A title must stay unique for a given owner, whether the owner is an authenticated
+     * customer or an anonymous session.
+     *
+     * @throws DuplicateWishListTitleException
+     */
+    protected function assertTitleIsAvailable($title, $wishListId = null): void
+    {
+        if (null === $title || '' === trim((string) $title)) {
+            return;
+        }
+
+        $duplicate = $this->findOwnedWishListByTitle($title, $wishListId);
+
+        if (null !== $duplicate) {
+            throw new DuplicateWishListTitleException(
+                Translator::getInstance()->trans('You already have a wishlist with this name', [], WishListModule::DOMAIN_NAME)
+            );
+        }
+    }
+
+    protected function findOwnedWishListByTitle($title, $excludedWishListId = null): ?WishList
+    {
+        [$customerId, $sessionId] = $this->getCurrentUserOrSession();
+
+        // Without an owner there is nothing to scope the search on: checking against every
+        // wish list of the shop would reject unrelated titles.
+        if (null === $customerId && null === $sessionId) {
+            return null;
+        }
+
+        $query = WishListQuery::create()->filterByTitle($title);
+
+        if (null !== $customerId) {
+            $query->filterByCustomerId($customerId);
+        }
+
+        if (null !== $sessionId) {
+            $query->filterBySessionId($sessionId);
+        }
+
+        if (null !== $excludedWishListId) {
+            $query->filterById($excludedWishListId, Criteria::NOT_EQUAL);
+        }
+
+        return $query->findOne();
     }
 
     protected function findCurrentDefaultWishList()

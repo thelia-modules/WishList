@@ -63,3 +63,38 @@ To provide feedback to the user after each wishlist update, you must add this co
 ```twig
 {{ component('WishList:WishListAlert') }}
 ```
+
+## Business rules enforced by `WishListService`
+
+### Unique title per owner
+
+`createUpdateWishList()` and `duplicateWishList()` refuse a title already used by another
+wish list of the same owner, be it a customer or an anonymous session, and throw a
+`WishList\Exception\DuplicateWishListTitleException`. The front controllers turn it into a
+form error, and the `WishList:WishListButton` modal shows it next to the name field.
+
+`cloneWishList()` is left out on purpose: it duplicates a list under the very same title to
+build a wish list type.
+
+### A quantity of zero removes the line
+
+`addProduct()` with a quantity of `0` (or `null`) removes the product from the list instead
+of storing a line with an empty quantity, so a quantity input can drive both operations.
+
+### Stock guards when a wish list goes to the cart
+
+`addWishListToCart()` and `createCartFromWishlist()` return the lines that could not reach
+the cart as requested, as an array of `WishList\Dto\RejectedWishListProduct`:
+
+| Reason | Effect |
+|---|---|
+| `product_sale_element_missing` | line skipped |
+| `product_not_visible` | line skipped |
+| `out_of_stock` | line skipped |
+| `stock_limited` | quantity reduced to `acceptedQuantity` |
+
+Stock is only looked at when the shop checks availability (`check-available-stock`
+configuration) and the product is not virtual, which mirrors what the core does on cart
+quantity updates. A shop that does not track stock keeps every line.
+
+Both API endpoints return that list under a `rejectedProducts` key.

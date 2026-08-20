@@ -671,9 +671,7 @@ class WishListController extends BaseFrontController
     #[Route('/add-to-cart/{wishListId}', name: 'add_to_cart', methods: ['POST'])]
     public function addToCart($wishListId, WishListService $wishListService)
     {
-        $wishListService->addWishListToCart($wishListId);
-
-        return new JsonResponse();
+        return new JsonResponse(['rejectedProducts' => $wishListService->addWishListToCart($wishListId)]);
     }
 
     /**
@@ -697,9 +695,7 @@ class WishListController extends BaseFrontController
     #[Route('/cart/from-wishlist/{wishListId}', name: 'cart_from_wishlist', methods: ['POST'])]
     public function createCartFromWishlist($wishListId, WishListService $wishListService): JsonResponse
     {
-        $wishListService->createCartFromWishlist($wishListId);
-
-        return new JsonResponse();
+        return new JsonResponse(['rejectedProducts' => $wishListService->createCartFromWishlist($wishListId)]);
     }
 
     protected function getOpenApiWishList($wishListId, ModelFactory $modelFactory, WishListService $wishListService, $lite = false)
