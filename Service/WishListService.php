@@ -23,6 +23,7 @@ use Thelia\Core\Translation\Translator;
 use Thelia\Log\Tlog;
 use Thelia\Model\ConfigQuery;
 use Thelia\Model\Lang;
+use Thelia\Model\Product;
 use WishList\Dto\RejectedWishListProduct;
 use WishList\Dto\RejectionReason;
 use WishList\Exception\DuplicateWishListTitleException;
@@ -476,7 +477,7 @@ class WishListService
 
         $product = $productSaleElements->getProduct();
         $productId = $productSaleElements->getProductId();
-        $productTitle = $product?->getTitle();
+        $productTitle = $this->productTitle($product);
 
         if (null === $product || 1 !== (int) $product->getVisible()) {
             return new RejectedWishListProduct(
@@ -555,6 +556,31 @@ class WishListService
         }
 
         return $newWishList;
+    }
+
+    /**
+     * A catalogue is rarely translated in every locale Propel defaults to, so the title is
+     * looked up in the locale of the request, then in the shop one, and the reference is
+     * kept as a last resort: a rejected line must always be nameable to the customer.
+     */
+    private function productTitle(?Product $product): ?string
+    {
+        if (null === $product) {
+            return null;
+        }
+
+        $request = $this->requestStack->getCurrentRequest();
+        $locales = array_filter([$request?->getLocale(), Lang::getDefaultLanguage()->getLocale()]);
+
+        foreach ($locales as $locale) {
+            $title = $product->setLocale($locale)->getTitle();
+
+            if (null !== $title && '' !== $title) {
+                return $title;
+            }
+        }
+
+        return $product->getRef();
     }
 
     protected function getWishListObject($wishListId, $customerId, $sessionId): ?WishList
