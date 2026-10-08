@@ -91,6 +91,7 @@ class WishList extends BaseModule
                 __DIR__.'/Model/Api/*',
                 __DIR__.'/Dto/*',
                 __DIR__.'/Exception/*',
+                __DIR__.'/Tests/*',
             ])
             ->autowire(true)
             ->autoconfigure(true);

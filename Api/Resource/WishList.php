@@ -20,6 +20,7 @@ use WishList\Model\Map\WishListTableMap;
         new GetCollection(
             uriTemplate: '/admin/wish-lists',
             paginationEnabled: true,
+            security: 'is_granted("ROLE_ADMIN")',
             provider: PropelCollectionProvider::class,
         ),
     ],
@@ -30,6 +31,8 @@ use WishList\Model\Map\WishListTableMap;
         new GetCollection(
             uriTemplate: '/front/wish-lists',
             paginationEnabled: true,
+            // Restricted to the caller's own lists by FrontOwnerCollectionExtension.
+            security: 'is_granted("ROLE_CUSTOMER")',
             provider: PropelCollectionProvider::class,
         ),
     ],
@@ -71,7 +74,8 @@ class WishList implements PropelResourceInterface
     #[Groups([self::GROUP_ADMIN_READ, self::GROUP_FRONT_READ])]
     public ?string $code = null;
 
-    #[Groups([self::GROUP_ADMIN_READ, self::GROUP_FRONT_READ])]
+    // A session id is a credential: never handed back on the front.
+    #[Groups([self::GROUP_ADMIN_READ])]
     public ?string $sessionId = null;
 
     #[Groups([self::GROUP_ADMIN_READ, self::GROUP_FRONT_READ])]

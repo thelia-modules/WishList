@@ -24,6 +24,9 @@ use Thelia\Log\Tlog;
 use Thelia\Model\ConfigQuery;
 use Thelia\Model\Lang;
 use Thelia\Model\Product;
+use Thelia\Model\Map\ProductSaleElementsTableMap;
+use Thelia\Model\ProductSaleElementsQuery;
+use WishList\Model\Map\WishListProductTableMap;
 use WishList\Dto\RejectedWishListProduct;
 use WishList\Dto\RejectionReason;
 use WishList\Exception\DuplicateWishListTitleException;
@@ -110,6 +113,10 @@ class WishListService
     {
         [$customerId, $sessionId] = $this->getCurrentUserOrSession();
 
+        if (null === $customerId && null === $sessionId) {
+            return false;
+        }
+
         return null !== WishListProductQuery::getExistingObject($wishListId, $customerId, $sessionId, $pseId);
     }
 
@@ -128,6 +135,10 @@ class WishListService
             ->endUse()
             ->distinct();
 
+        if (null === $customerId && null === $sessionId) {
+            return $query->where('1 = 0')->find();
+        }
+
         if (null !== $customerId) {
             $query->filterByCustomerId($customerId);
         }
@@ -139,6 +150,119 @@ class WishListService
         return $query->find();
     }
 
+    /**
+     * Every wish list of the current owner holding at least one sale element of the product.
+     *
+     * @return \Propel\Runtime\Collection\ObjectCollection|WishList[]
+     */
+    public function getWishListsContainingProduct(int $productId)
+    {
+        [$customerId, $sessionId] = $this->getCurrentUserOrSession();
+
+        $query = WishListQuery::create()
+            ->useWishListProductQuery()
+                ->useProductSaleElementsQuery()
+                    ->filterByProductId($productId)
+                ->endUse()
+            ->endUse()
+            ->distinct();
+
+        if (null === $customerId && null === $sessionId) {
+            return $query->where('1 = 0')->find();
+        }
+
+        if (null !== $customerId) {
+            $query->filterByCustomerId($customerId);
+        }
+
+        if (null !== $sessionId) {
+            $query->filterBySessionId($sessionId);
+        }
+
+        return $query->find();
+    }
+
+    /**
+     * The visible products of each list of the current owner, read in one query.
+     *
+     * @return array<int, list<int>> product ids keyed by wish list id
+     */
+    public function getVisibleProductIdsByWishList(): array
+    {
+        [$customerId, $sessionId] = $this->getCurrentUserOrSession();
+
+        if (null === $customerId && null === $sessionId) {
+            return [];
+        }
+
+        $rows = WishListProductQuery::create()
+            ->useWishListQuery()
+                ->_if(null !== $customerId)
+                    ->filterByCustomerId($customerId)
+                ->_else()
+                    ->filterBySessionId($sessionId)
+                ->_endif()
+            ->endUse()
+            ->useProductSaleElementsQuery()
+                ->useProductQuery()
+                    ->filterByVisible(1)
+                ->endUse()
+            ->endUse()
+            ->orderById()
+            ->select([WishListProductTableMap::COL_WISH_LIST_ID, ProductSaleElementsTableMap::COL_PRODUCT_ID])
+            ->find();
+
+        $productIds = [];
+
+        foreach ($rows as $row) {
+            $wishListId = (int) $row[WishListProductTableMap::COL_WISH_LIST_ID];
+            $productId = (int) $row[ProductSaleElementsTableMap::COL_PRODUCT_ID];
+
+            $productIds[$wishListId][$productId] = $productId;
+        }
+
+        return array_map(array_values(...), $productIds);
+    }
+
+    /**
+     * Removes every sale element of the product from one list of the current owner.
+     */
+    public function removeProductFromWishList(int $productId, int $wishListId): bool
+    {
+        [$customerId, $sessionId] = $this->getCurrentUserOrSession();
+
+        $wishList = $this->getWishListObject($wishListId, $customerId, $sessionId);
+
+        if (null === $wishList) {
+            return false;
+        }
+
+        WishListProductQuery::create()
+            ->filterByWishListId($wishList->getId())
+            ->useProductSaleElementsQuery()
+                ->filterByProductId($productId)
+            ->endUse()
+            ->find()
+            ->delete();
+
+        return true;
+    }
+
+    /**
+     * The sale element a product goes into a list with when the customer picks the product
+     * itself (a product card): its default one, else its first one.
+     */
+    public function findDefaultProductSaleElementsId(int $productId): ?int
+    {
+        $productSaleElements = ProductSaleElementsQuery::create()
+            ->filterByProductId($productId)
+            ->orderByIsDefault(Criteria::DESC)
+            ->orderById()
+            ->findOne();
+
+        return $productSaleElements?->getId();
+    }
+
     public function isPseInAnyWishList($pseId): bool
     {
         return $this->getWishListsContainingPse($pseId)->count() > 0;
@@ -146,15 +270,7 @@ class WishListService
 
     public function getWishList($wishListId)
     {
-        $customer = $this->securityContext->getCustomerUser();
-        $customerId = $customer?->getId();
-        $sessionId = null;
-        if (!$customer) {
-            $request = $this->requestStack->getCurrentRequest();
-            if (null !== $request && $request->hasSession()) {
-                $sessionId = $request->getSession()->getId();
-            }
-        }
+        [$customerId, $sessionId] = $this->getCurrentUserOrSession();
 
         return $this->getWishListObject($wishListId, $customerId, $sessionId);
     }
@@ -164,6 +280,11 @@ class WishListService
         [$customerId, $sessionId] = $this->getCurrentUserOrSession();
 
         $wishList = WishListQuery::create();
+
+        // Without an owner, every list of the shop would be returned.
+        if (null === $customerId && null === $sessionId) {
+            return $wishList->where('1 = 0')->find();
+        }
 
         if (null !== $customerId) {
             $wishList->filterByCustomerId($customerId);
@@ -179,6 +300,10 @@ class WishListService
     public function clearWishList($wishListId)
     {
         [$customerId, $sessionId] = $this->getCurrentUserOrSession();
+
+        if (null === $customerId && null === $sessionId) {
+            return false;
+        }
 
         $query = WishListProductQuery::create()
             ->useWishListQuery()
@@ -206,6 +331,13 @@ class WishListService
 
     public function findWishListOrCreateDefault($wishListId = null)
     {
+        [$customerId, $sessionId] = $this->getCurrentUserOrSession();
+
+        // Nobody to give the list to: creating one would leave an orphan any caller could reach.
+        if (null === $customerId && null === $sessionId) {
+            return null;
+        }
+
         if ($wishListId) {
             return $this->getWishList($wishListId);
         }
@@ -250,6 +382,10 @@ class WishListService
     public function createUpdateWishList($title, $products = null, $wishListId = null)
     {
         [$customerId, $sessionId] = $this->getCurrentUserOrSession();
+
+        if (null === $customerId && null === $sessionId) {
+            throw new \RuntimeException('A wish list needs a customer or a session to belong to.');
+        }
 
         $this->assertTitleIsAvailable($title, $wishListId);
 
@@ -357,6 +493,16 @@ class WishListService
         }
 
         return $newWishList;
+    }
+
+    public function moveSessionListsToCustomer(string $sessionId, int $customerId): void
+    {
+        foreach (WishListQuery::create()->filterBySessionId($sessionId)->find() as $wishList) {
+            $wishList
+                ->setCustomerId($customerId)
+                ->setSessionId(null)
+                ->save();
+        }
     }
 
     public function sessionToUser($sessionId): void
@@ -585,6 +731,11 @@ class WishListService
 
     protected function getWishListObject($wishListId, $customerId, $sessionId): ?WishList
     {
+        // Without an owner the query below would match the list of anybody.
+        if (null === $customerId && null === $sessionId) {
+            return null;
+        }
+
         $wishList = WishListQuery::create()
             ->filterById($wishListId);
 
@@ -651,6 +802,10 @@ class WishListService
     {
         [$customerId, $sessionId] = $this->getCurrentUserOrSession();
 
+        if (null === $customerId && null === $sessionId) {
+            return null;
+        }
+
         $wishList = WishListQuery::create()
             ->filterByDefault(1);
 
@@ -673,7 +828,8 @@ class WishListService
         if (!$customer) {
             $request = $this->requestStack->getCurrentRequest();
             if (null !== $request && $request->hasSession()) {
-                $sessionId = $request->getSession()->getId();
+                // An unstarted session answers an empty id: it owns nothing.
+                $sessionId = $request->getSession()->getId() ?: null;
             }
         }
 
