@@ -10,6 +10,7 @@ use Symfony\UX\LiveComponent\Attribute\LiveArg;
 use Symfony\UX\LiveComponent\Attribute\LiveListener;
 use Symfony\UX\LiveComponent\DefaultActionTrait;
 use Thelia\Controller\Front\BaseFrontController;
+use WishList\WishList as WishListModule;
 
 #[AsLiveComponent(name: 'WishList:WishListAlert', template: '@WishListModule/components/WishListAlert.html.twig')]
 class WishListAlert extends BaseFrontController
@@ -22,6 +23,11 @@ class WishListAlert extends BaseFrontController
     public function addMessage(#[LiveArg] string $message): void
     {
         $this->message = $message;
+    }
+
+    public function getCloseLabel(): string
+    {
+        return $this->translator->trans('Close', [], WishListModule::DOMAIN_NAME);
     }
 
     #[LiveAction]
