@@ -2,7 +2,10 @@
 {% set labels = this.labels %}
 <div {{ attributes.defaults({class: 'WishListButton'}) }}>
 	<button type="button" class="ButtonWishList {{ inWishList ? 'in-wishlist' : '' }}" data-action="live#action" data-live-action-param="open" aria-label="{{ inWishList ? labels.manage : labels.add }}" aria-pressed="{{ inWishList ? 'true' : 'false' }}">
-		{{ ux_icon(inWishList ? 'heart-fill' : 'heart', {fill: inWishList ? 'currentColor' : 'transparent'}) }}
+		{# heart-fill.svg has no size and a tight viewBox: give it the 44x44 box of heart.svg so both states render alike #}
+		{{ inWishList
+			? ux_icon('heart-fill', {fill: 'currentColor', viewBox: '0 0 44 44', width: 44})
+			: ux_icon('heart', {fill: 'transparent'}) }}
 	</button>
 
 	{% if this.isOpen %}
