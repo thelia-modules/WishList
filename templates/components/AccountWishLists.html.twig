@@ -1,0 +1,39 @@
+{% set labels = this.labels %}
+<section id="wishlists" class="container-l pb-15" {{ attributes }}>
+	<h2 class="h4 text-black mb-6">{{ labels.title }}</h2>
+
+	{% set wishLists = this.wishLists %}
+	{% if wishLists is empty %}
+		<p class="paragraph-2">{{ labels.noList }}</p>
+	{% endif %}
+
+	{% for wishList in wishLists %}
+		<div class="flex flex-col gap-6 mb-6" data-wish-list-id="{{ wishList.id }}">
+			<div class="flex flex-wrap items-center justify-between gap-4">
+				<h3 class="h4">{{ wishList.title }}</h3>
+				{{ component('Molecules:Button:Base', {
+					text: labels.delete,
+					color: 'minimal',
+					size: 'small',
+					icon_left: 'delete',
+					'data-action': 'live#action',
+					'data-live-action-param': 'deleteWishList',
+					'data-live-wish-list-id-param': wishList.id,
+				}) }}
+			</div>
+
+			{% if wishList.productIds is empty %}
+				<p class="paragraph-2">{{ labels.emptyList }}</p>
+			{% else %}
+				{# Same grid as the theme's product block. #}
+				<div class="grid gap-8" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
+					{% for productId in wishList.productIds %}
+						<div class="max-w-sm mx-auto w-full" id="wishlist-{{ wishList.id }}-product-{{ productId }}">
+							{{ component('Organisms:ProductCard:Base', {productId: productId}) }}
+						</div>
+					{% endfor %}
+				</div>
+			{% endif %}
+		</div>
+	{% endfor %}
+</section>

@@ -22,6 +22,7 @@ use WishList\Model\WishListProduct as WishListProductModel;
         new GetCollection(
             uriTemplate: '/admin/wish-list-products',
             paginationEnabled: true,
+            security: 'is_granted("ROLE_ADMIN")',
             provider: PropelCollectionProvider::class,
         ),
     ],
@@ -32,6 +33,8 @@ use WishList\Model\WishListProduct as WishListProductModel;
         new GetCollection(
             uriTemplate: '/front/wish-list-products',
             paginationEnabled: true,
+            // Restricted to the caller's own lists by FrontOwnerCollectionExtension.
+            security: 'is_granted("ROLE_CUSTOMER")',
             provider: PropelCollectionProvider::class,
         ),
     ],
