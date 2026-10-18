@@ -87,8 +87,6 @@ class WishList extends BaseModule
         $servicesConfigurator->load(self::getModuleCode().'\\', __DIR__)
             ->exclude([
                 __DIR__.'/I18n/*',
-                __DIR__.'/Controller/Front/Api/*',
-                __DIR__.'/Model/Api/*',
                 __DIR__.'/Dto/*',
                 __DIR__.'/Exception/*',
                 __DIR__.'/Tests/*',
