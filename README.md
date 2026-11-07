@@ -72,3 +72,7 @@ the cart as requested, as an array of `WishList\Dto\RejectedWishListProduct`:
 Stock is only looked at when the shop checks availability (`check-available-stock`
 configuration) and the product is not virtual, which mirrors what the core does on cart
 quantity updates. A shop that does not track stock keeps every line.
+
+On Thelia 3.3 and later, the stock a line is judged against is the one the cart reads: with a
+sale unit resolved, the unit's own stock when it keeps one for the sale element, the national
+counter otherwise. Without a sale unit, or on a core that has none, it is the national counter.

@@ -43,9 +43,11 @@ class WishListService
     protected $securityContext;
     protected $requestStack;
     protected $eventDispatcher;
+    protected CartableStock $cartableStock;
 
-    public function __construct(RequestStack $requestStack, SecurityContext $securityContext, EventDispatcherInterface $eventDispatcher)
+    public function __construct(RequestStack $requestStack, SecurityContext $securityContext, EventDispatcherInterface $eventDispatcher, CartableStock $cartableStock)
     {
+        $this->cartableStock = $cartableStock;
         $this->securityContext = $securityContext;
         $this->requestStack = $requestStack;
         $this->eventDispatcher = $eventDispatcher;
@@ -640,7 +642,7 @@ class WishListService
             return null;
         }
 
-        $availableQuantity = (int) $productSaleElements->getQuantity();
+        $availableQuantity = $this->cartableStock->availableQuantity($productSaleElements);
 
         if ($availableQuantity <= 0) {
             return new RejectedWishListProduct(
