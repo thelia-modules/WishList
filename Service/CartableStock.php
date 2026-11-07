@@ -29,12 +29,12 @@ class CartableStock
     {
     }
 
-    public function availableQuantity(ProductSaleElements $productSaleElements): int
+    public function availableQuantity(ProductSaleElements $productSaleElements): float
     {
         if (null === $this->saleUnitAvailableStock) {
-            return (int) $productSaleElements->getQuantity();
+            return (float) $productSaleElements->getQuantity();
         }
 
-        return (int) $this->saleUnitAvailableStock->availableQuantity($productSaleElements);
+        return $this->saleUnitAvailableStock->availableQuantity($productSaleElements);
     }
 }

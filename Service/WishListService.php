@@ -45,9 +45,9 @@ class WishListService
     protected $eventDispatcher;
     protected CartableStock $cartableStock;
 
-    public function __construct(RequestStack $requestStack, SecurityContext $securityContext, EventDispatcherInterface $eventDispatcher, CartableStock $cartableStock)
+    public function __construct(RequestStack $requestStack, SecurityContext $securityContext, EventDispatcherInterface $eventDispatcher, ?CartableStock $cartableStock = null)
     {
-        $this->cartableStock = $cartableStock;
+        $this->cartableStock = $cartableStock ?? new CartableStock();
         $this->securityContext = $securityContext;
         $this->requestStack = $requestStack;
         $this->eventDispatcher = $eventDispatcher;
@@ -638,7 +638,7 @@ class WishListService
             );
         }
 
-        if (!$checkStock || 1 === (int) $product->getVirtual()) {
+        if (!$checkStock || 0 !== (int) $product->getVirtual()) {
             return null;
         }
 
@@ -655,7 +655,8 @@ class WishListService
             );
         }
 
-        $quantity = min($requestedQuantity, $availableQuantity);
+        // A line quantity is a whole number: a fractional stock only counts for its whole part.
+        $quantity = min($requestedQuantity, (int) floor($availableQuantity));
 
         if ($quantity < $requestedQuantity) {
             return new RejectedWishListProduct(

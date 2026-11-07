@@ -15,38 +15,58 @@ declare(strict_types=1);
 namespace WishList\Tests\Unit\Service;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Thelia\Core\Security\SecurityContext;
 use Thelia\Domain\SaleUnit\SaleUnitContext;
 use Thelia\Domain\SaleUnit\Stock\SaleUnitAvailableStock;
 use Thelia\Domain\SaleUnit\Stock\SaleUnitStockResolver;
 use Thelia\Model\ProductSaleElements;
 use Thelia\Model\SaleUnit;
 use WishList\Service\CartableStock;
+use WishList\Service\WishListService;
 
 final class CartableStockTest extends TestCase
 {
     public function testItReadsTheNationalCounterWithoutSaleUnitStock(): void
     {
-        self::assertSame(5, (new CartableStock())->availableQuantity($this->productSaleElements(5)));
+        self::assertSame(5.0, (new CartableStock())->availableQuantity($this->productSaleElements(5)));
     }
 
     public function testItReadsTheNationalCounterWhenNoSaleUnitIsResolved(): void
     {
-        self::assertSame(5, $this->cartableStock(null, [])->availableQuantity($this->productSaleElements(5)));
+        self::assertSame(5.0, $this->cartableStock(null, [])->availableQuantity($this->productSaleElements(5)));
     }
 
     public function testASaleUnitStockCoversALineThatTheNationalCounterCannot(): void
     {
-        self::assertSame(7, $this->cartableStock(3, [42 => 7.0])->availableQuantity($this->productSaleElements(0)));
+        self::assertSame(7.0, $this->cartableStock(3, [42 => 7.0])->availableQuantity($this->productSaleElements(0)));
     }
 
     public function testASaleUnitWithoutStockLeftRefusesALineThatTheNationalCounterCovers(): void
     {
-        self::assertSame(0, $this->cartableStock(3, [42 => 0.0])->availableQuantity($this->productSaleElements(9)));
+        self::assertSame(0.0, $this->cartableStock(3, [42 => 0.0])->availableQuantity($this->productSaleElements(9)));
     }
 
     public function testASaleUnitWithoutOwnRowFallsBackOnTheNationalCounter(): void
     {
-        self::assertSame(9, $this->cartableStock(3, [])->availableQuantity($this->productSaleElements(9)));
+        self::assertSame(9.0, $this->cartableStock(3, [])->availableQuantity($this->productSaleElements(9)));
+    }
+
+    public function testAFractionalSaleUnitStockIsNotRoundedDown(): void
+    {
+        self::assertSame(0.5, $this->cartableStock(3, [42 => 0.5])->availableQuantity($this->productSaleElements(0)));
+    }
+
+    public function testTheServiceIsStillBuiltWithItsThreeHistoricalArguments(): void
+    {
+        $service = new WishListService(
+            $this->createMock(RequestStack::class),
+            $this->createMock(SecurityContext::class),
+            $this->createMock(EventDispatcherInterface::class),
+        );
+
+        self::assertInstanceOf(WishListService::class, $service);
     }
 
     private function productSaleElements(int $nationalQuantity): ProductSaleElements
